@@ -16,14 +16,29 @@
         .data-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #f9f9f9; align-items: center; padding-bottom: 4px; }
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
+        
+        /* Estilo especial para la lista de pacientes en espera */
+        .lista-espera { 
+            width: 100%; 
+            margin: 5px 0 0 0; 
+            padding-left: 20px; 
+            color: #222; 
+            font-weight: bold; 
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .lista-espera li {
+            margin-bottom: 4px;
+        }
+
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
         /* Contenedor de la barra */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; }
         
-        /* Barra de progreso optimizada: texto legible, centrado y con sombra para alto contraste */
+        /* Barras de progreso optimizadas: Altura ideal y letra perfectamente legible */
         .progress-bar { 
-            height: 14px; 
+            height: 20px; 
             border-radius: 4px; 
             width: 0%; 
             transition: width 0.5s ease-in-out; 
@@ -31,9 +46,9 @@
             align-items: center; 
             justify-content: center; 
             color: white; 
-            font-size: 10px; 
+            font-size: 13px; 
             font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
         }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
@@ -79,7 +94,10 @@
             <div class="data-row"><span class="label">Pacientes en Sala:</span> <span class="value" id="pacientes">--</span></div>
 
             <div class="section-title">🪑 RECEPCIÓN</div>
-            <div class="data-row"><span class="label">Pacientes en Espera:</span> <span class="value" id="pacientes-espera">--</span></div>
+            <div class="label" style="margin-bottom: 5px;">Pacientes en Espera:</div>
+            <ul class="lista-espera" id="pacientes-espera">
+                <li>--</li>
+            </ul>
         </div>
 
         <div class="card">
@@ -125,23 +143,58 @@
             if (!respuesta.ok) throw new Error("No se pudo conectar con el Excel.");
             
             const textoCSV = await respuesta.text();
-            const filas = textoCSV.split(/\r?\n/).map(f => f.trim()).filter(f => f.length > 0);
             
+            // Expresión regular avanzada para segmentar filas respetando las comillas y los saltos de línea internos de la celda de nombres
+            const filas = [];
+            let filaActual = [];
+            let campoActual = '';
+            let dentroDeComillas = false;
+
+            for (let i = 0; i < textoCSV.length; i++) {
+                let char = textoCSV[i];
+                let siguienteChar = textoCSV[i+1];
+
+                if (char === '"') {
+                    if (dentroDeComillas && siguienteChar === '"') {
+                        campoActual += '"';
+                        i++;
+                    } else {
+                        dentroDeComillas = !dentroDeComillas;
+                    }
+                } else if (char === ',' && !dentroDeComillas) {
+                    filaActual.push(campoActual.trim());
+                    campoActual = '';
+                } else if ((char === '\r' || char === '\n') && !dentroDeComillas) {
+                    if (char === '\r' && siguienteChar === '\n') { i++; }
+                    filaActual.push(campoActual.trim());
+                    if (filaActual.some(c => c.length > 0)) {
+                        filas.push(filaActual);
+                    }
+                    filaActual = [];
+                    campoActual = '';
+                } else {
+                    campoActual += char;
+                }
+            }
+            if (campoActual || filaActual.length > 0) {
+                filaActual.push(campoActual.trim());
+                filas.push(filaActual);
+            }
+
             let filaDatos = null;
 
+            // Buscar la fila que comience con el valor numérico del PH
             for (let i = 0; i < filas.length; i++) {
-                const columnas = filas[i].split(",").map(col => col.replace(/^"|"$/g, '').trim());
-                const valorPH = columnas[0];
+                const valorPH = filas[i][0];
                 const esNumeroValido = /^\d+(\.\d+)?$/.test(valorPH);
-
                 if (valorPH && esNumeroValido) {
-                    filaDatos = columnas;
+                    filaDatos = filas[i];
                     break;
                 }
             }
 
             if (!filaDatos && filas.length > 0) {
-                filaDatos = filas[filas.length - 1].split(",").map(col => col.replace(/^"|"$/g, '').trim());
+                filaDatos = filas[filas.length - 1];
             }
 
             if (!filaDatos || filaDatos.length < 5) {
@@ -165,20 +218,40 @@
             document.getElementById('cateter').innerText         = filaDatos[10] || '--'; 
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
-            document.getElementById('pacientes-espera').innerText = filaDatos[17] || '--';
+
+            // --- PROCESAMIENTO DE LA LISTA DE PACIENTES EN ESPERA (COLUMNA R / 17) ---
+            const contenedorEspera = document.getElementById('pacientes-espera');
+            const textoNombres = filaDatos[17];
+
+            if (textoNombres && textoNombres.trim() !== "" && textoNombres !== '--') {
+                // Separamos los nombres basándonos en los saltos de línea internos de la celda
+                const listaNombres = textoNombres.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+                
+                if(listaNombres.length > 0) {
+                    contenedorEspera.innerHTML = ""; // Limpiamos el marcador por defecto
+                    listaNombres.forEach(nombre => {
+                        const li = document.createElement('li');
+                        li.innerText = nombre;
+                        contenedorEspera.appendChild(li);
+                    });
+                } else {
+                    contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
+                }
+            } else {
+                contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
+            }
 
             // Suministros
             if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
             if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
             
-            document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
+            document.getElementById('limpieza').innerText        = filaDatos[15] ? filaDatos[15] + " Días" : '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
             // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
-            // Capacidades de planta asignadas según tus requerimientos
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
 
@@ -188,7 +261,7 @@
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
-            // Renderizado dinámico en las barras de progreso optimizadas
+            // Renderizado dinámico en las barras ampliadas
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = Math.round(pCombLimpio) + "%";
@@ -197,7 +270,6 @@
             barAgua.style.width = pAguaLimpio + "%";
             barAgua.innerText = Math.round(pAguaLimpio) + "%";
 
-            // Sello de tiempo de actualización
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
 
