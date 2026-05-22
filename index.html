@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Clinedia (Conectado en Vivo)</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 20px; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 8px; }
+        .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        .data-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #f9f9f9; align-items: center; padding-bottom: 4px; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #222; font-weight: bold; }
+        .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
+        
+        /* Barras de progreso para Suministros */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; }
+        .progress-bar { height: 8px; border-radius: 4px; width: 0%; transition: width 0.5s ease-in-out; }
+        .bg-combustible { background-color: #e67e22; }
+        .bg-agua { background-color: #3498db; }
+        
+        .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>TABLERO CLINEDIA</h1>
+        <p>Estado del Sistema Sincronizado</p>
+        <div class="status-sync" id="sync-time">Buscando datos del Excel...</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>💧 Planta de Tratamiento</h2>
+            <div class="data-row"><span class="label">PH:</span> <span class="value" id="ph">--</span></div>
+            <div class="data-row"><span class="label">TDS:</span> <span class="value" id="tds">--</span></div>
+            <div class="data-row"><span class="label">Dureza:</span> <span class="value" id="dureza">--</span></div>
+            <div class="data-row"><span class="label">Cloro:</span> <span class="value" id="cloro">--</span></div>
+            <div class="data-row"><span class="label">Turbidez (NTU):</span> <span class="value" id="ntu">--</span></div>
+            <div class="data-row"><span class="label">Sal Actual en Salmuera:</span> <span class="value" id="salmuera">--</span></div>
+            
+            <div class="data-row" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 8px;"><span class="label">Análisis Microbiológico:</span> <span class="value" id="microbiologico">--</span></div>
+            <div class="data-row"><span class="label">Análisis Físico-Químico:</span> <span class="value" id="fisicoquimico">--</span></div>
+            
+            <div class="alert">
+                <div>📅 Ult. Desinf. Reservorio: <span id="ult-desinf">--</span></div>
+                <div style="margin-top: 5px;">⚠️ Próx. Desinf. Reservorio: <span id="prox-desinf">--</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📦 Gestión Operativa</h2>
+            <div class="data-row"><span class="label">KIT de Catéter:</span> <span class="value" id="cateter">--</span></div>
+            <div class="data-row"><span class="label">Kit de Fístula:</span> <span class="value" id="fistula">--</span></div>
+            <div class="data-row"><span class="label">Pacientes Sala Hemodiálisis:</span> <span class="value" id="pacientes">--</span></div>
+        </div>
+
+        <div class="card">
+            <h2>🛠️ Suministros y Mtto.</h2>
+            
+            <div>
+                <div class="data-row">
+                    <span class="label">Combustible Planta:</span> 
+                    <span class="value" id="txt-combustible">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-combustible" class="progress-bar bg-combustible" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="data-row">
+                    <span class="label">Cant. Agua Cisternas:</span> 
+                    <span class="value" id="txt-agua">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-agua" class="progress-bar bg-agua" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="data-row" style="margin-top: 15px;">
+                <span class="label">Limpieza Exhaustiva:</span> 
+                <span class="value" id="limpieza">--</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Fumigación Instalación:</span> 
+                <span class="value" id="fumigacion">--</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
+                    
+    async function actualizarDashboard() {
+        try {
+            const respuesta = await fetch(URL_GOOGLE_SHEET);
+            if (!respuesta.ok) throw new Error("No se pudo conectar con el Excel.");
+            
+            const textoCSV = await respuesta.text();
+            
+            // Separamos el documento por líneas limpias
+            const filas = textoCSV.split(/\r?\n/).map(f => f.trim()).filter(f => f.length > 0);
+            
+            let filaDatos = null;
+
+            // Buscador avanzado de fila numérica para el pH
+            for (let i = 0; i < filas.length; i++) {
+                // Parsea la fila considerando comas simples
+                const columnas = filas[i].split(",").map(col => col.replace(/^"|"$/g, '').trim());
+                const valorPH = columnas[0];
+                const esNumeroValido = /^\d+(\.\d+)?$/.test(valorPH);
+
+                if (valorPH && esNumeroValido) {
+                    filaDatos = columnas;
+                    break;
+                }
+            }
+
+            // Plan de respaldo si falla el detector automático
+            if (!filaDatos && filas.length > 0) {
+                filaDatos = filas[filas.length - 1].split(",").map(col => col.replace(/^"|"$/g, '').trim());
+            }
+
+            if (!filaDatos || filaDatos.length < 5) {
+                document.getElementById('sync-time').innerText = "Error: Estructura de datos no encontrada.";
+                return;
+            }
+
+            // --- INYECCIÓN DE DATOS EN LAS CASILLAS ---
+            
+            // Planta de Tratamiento
+            document.getElementById('ph').innerText              = filaDatos[0] || '--';  
+            document.getElementById('tds').innerText             = filaDatos[1] || '--';  
+            document.getElementById('dureza').innerText          = filaDatos[2] || '--';  
+            document.getElementById('cloro').innerText           = filaDatos[3] || '--';  
+            document.getElementById('ntu').innerText             = filaDatos[4] || '--';  
+            document.getElementById('salmuera').innerText         = filaDatos[5] ? filaDatos[5] + " Kilos" : '--'; 
+            document.getElementById('ult-desinf').innerText       = filaDatos[6] || '--';  
+            document.getElementById('prox-desinf').innerText      = filaDatos[7] || '--';  
+            document.getElementById('microbiologico').innerText  = filaDatos[8] || '--';  
+            document.getElementById('fisicoquimico').innerText   = filaDatos[9] || '--';  
+            
+            // Gestión Operativa
+            document.getElementById('cateter').innerText         = filaDatos[10] || '--'; 
+            document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
+            document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
+
+            // Suministros y Mantenimiento
+            if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
+            if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
+            
+            // AJUSTE CORRECCIÓN DE FECHA CORTE: Aseguramos mapear correctamente las columnas 15 y 16 limpias
+            document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
+            document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
+
+            // --- CONTROL DE PORCENTAJES EN BARRAS DE PROGRESO ---
+            let combNum = parseFloat(filaDatos[13]) || 0;
+            let aguaNum = parseFloat(filaDatos[14]) || 0;
+            
+            // CONFIGURACIÓN DE CAPACIDADES MÁXIMAS:
+            // Define aquí el tamaño completo de tus tanques para calcular el porcentaje real
+            const CAPACIDAD_MAX_COMBUSTIBLE = 300; // Ajustado porque actualmente tienes 250 Gals
+            const CAPACIDAD_MAX_AGUA = 50;         // Ajustado porque actualmente tienes 33 Mts³
+
+            let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
+            let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
+
+            // Aplicamos los estilos de porcentaje dinámicamente de forma limpia
+            document.getElementById('bar-combustible').style.width = Math.min(Math.max(porcCombustible, 0), 100) + "%";
+            document.getElementById('bar-agua').style.width = Math.min(Math.max(porcAgua, 0), 100) + "%";
+
+            // Mostrar estampa de sincronización exitosa
+            const ahora = new Date();
+            document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
+
+        } catch (error) {
+            console.error("Error al procesar el tablero:", error);
+            document.getElementById('sync-time').innerText = "Error de sincronización con Google Sheets.";
+        }
+    }
+
+    // Inicialización automática y refresco continuo
+    actualizarDashboard();
+    setInterval(actualizarDashboard, 15000);
+</script>
+</body>
+</html>
