@@ -14,39 +14,11 @@
         .value { color: #222; font-weight: bold; }
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* Estilos de las Barras de Progreso */
-        .progress-container { 
-            position: relative; 
-            width: 100%; 
-            background-color: #e0e0e0; 
-            border-radius: 6px; 
-            margin-top: 6px; 
-            margin-bottom: 16px; 
-            overflow: hidden; 
-            height: 20px; 
-        }
-        .progress-bar { 
-            height: 100%; 
-            width: 0%; 
-            transition: width 0.5s ease-in-out; 
-        }
+        /* Barras de progreso para Suministros (Formato Original Delgadas) */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; position: relative; }
+        .progress-bar { height: 8px; border-radius: 4px; width: 0%; transition: width 0.5s ease-in-out; display: flex; align-items: center; justify-content: center; color: white; font-size: 7px; font-weight: bold; }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
-        
-        /* Texto del porcentaje centrado en la barra */
-        .progress-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.85em;
-            font-weight: bold;
-            color: #222; 
-            text-shadow: 0px 0px 2px rgba(255,255,255,0.8); 
-            pointer-events: none;
-        }
         
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
     </style>
@@ -80,8 +52,8 @@
 
         <div class="card">
             <h2>📦 Gestión Operativa</h2>
-            <div class="data-row"><span class="label">KIT de Catéter:</span> <span class="value" id="cateter">--</span></div>
-            <div class="data-row"><span class="label">Kit de Fístula:</span> <span class="value" id="fistula">--</span></div>
+            <div class="data-row"><span class="label">Kit de Catéter Disponible:</span> <span class="value" id="cateter">--</span></div>
+            <div class="data-row"><span class="label">Kit de Fístula Disponible:</span> <span class="value" id="fistula">--</span></div>
             <div class="data-row"><span class="label">Pacientes Sala Hemodiálisis:</span> <span class="value" id="pacientes">--</span></div>
         </div>
 
@@ -94,8 +66,7 @@
                     <span class="value" id="txt-combustible">--</span>
                 </div>
                 <div class="progress-container">
-                    <div id="bar-combustible" class="progress-bar bg-combustible" style="width: 0%;"></div>
-                    <div id="p-combustible" class="progress-text">0%</div>
+                    <div id="bar-combustible" class="progress-bar bg-combustible" style="width: 0%;">0%</div>
                 </div>
             </div>
 
@@ -105,8 +76,7 @@
                     <span class="value" id="txt-agua">--</span>
                 </div>
                 <div class="progress-container">
-                    <div id="bar-agua" class="progress-bar bg-agua" style="width: 0%;"></div>
-                    <div id="p-agua" class="progress-text">0%</div>
+                    <div id="bar-agua" class="progress-bar bg-agua" style="width: 0%;">0%</div>
                 </div>
             </div>
 
@@ -170,35 +140,36 @@
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
 
-            document.getElementById('txt-combustible').innerText = filaDatos[13] ? filaDatos[13] + " Gals" : '--';
-            document.getElementById('txt-agua').innerText        = filaDatos[14] ? filaDatos[14] + " Mts³" : '--';
-
-            // --- NUEVA CONFIGURACIÓN DE CAPACIDADES REALES (CONVERSIÓN DE UNIDADES) ---
-            let combGals = parseFloat(filaDatos[13]) || 0;
-            let aguaM3 = parseFloat(filaDatos[14]) || 0;
+            if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
+            if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
             
-            // 1. Combustible: Convertimos los galones del Excel a Litros (1 Galón ≈ 3.78541 Litros)
-            let combLitros = combGals * 3.78541;
-            const CAPACIDAD_MAX_COMBUSTIBLE_LITROS = 250; 
-
-            // 2. Agua: La capacidad es 33,500 Litros, que equivalen a 33.5 Mts³
-            const CAPACIDAD_MAX_AGUA_M3 = 33.5;         
-
-            // Cálculo matemático de porcentajes exactos
-            let porcCombustible = Math.min(Math.max((combLitros / CAPACIDAD_MAX_COMBUSTIBLE_LITROS) * 100, 0), 100); 
-            let porcAgua = Math.min(Math.max((aguaM3 / CAPACIDAD_MAX_AGUA_M3) * 100, 0), 100); 
-
-            // Asignación física a las barras
-            document.getElementById('bar-combustible').style.width = porcCombustible + "%";
-            document.getElementById('bar-agua').style.width = porcAgua + "%";
-
-            // Renderizado del texto de porcentaje dentro de las barras
-            document.getElementById('p-combustible').innerText = Math.round(porcCombustible) + "%";
-            document.getElementById('p-agua').innerText        = Math.round(porcAgua) + "%";
-
             document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
+            // --- CONTROL DE PORCENTAJES CON CAPACIDADES REALES ---
+            let combNum = parseFloat(filaDatos[13]) || 0;
+            let aguaNum = parseFloat(filaDatos[14]) || 0;
+            
+            // Tus capacidades reales exactas:
+            const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
+            const CAPACIDAD_MAX_AGUA = 33.5;         
+
+            let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
+            let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
+
+            let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
+            let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
+
+            // Aplicamos los estilos de porcentaje dinámicamente en tu formato original
+            const barComb = document.getElementById('bar-combustible');
+            barComb.style.width = pCombLimpio + "%";
+            barComb.innerText = Math.round(pCombLimpio) + "%";
+
+            const barAgua = document.getElementById('bar-agua');
+            barAgua.style.width = pAguaLimpio + "%";
+            barAgua.innerText = Math.round(pAguaLimpio) + "%";
+
+            // Mostrar estampa de sincronización exitosa
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
 
