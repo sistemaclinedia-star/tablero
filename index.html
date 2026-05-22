@@ -14,11 +14,39 @@
         .value { color: #222; font-weight: bold; }
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* Barras de progreso para Suministros */
-        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; }
-        .progress-bar { height: 8px; border-radius: 4px; width: 0%; transition: width 0.5s ease-in-out; }
+        /* --- NUEVO ESTILO PARA LAS BARRAS CON TEXTO PORCENTAJE --- */
+        .progress-container { 
+            position: relative; 
+            width: 100%; 
+            background-color: #e0e0e0; 
+            border-radius: 6px; 
+            margin-top: 6px; 
+            margin-bottom: 16px; 
+            overflow: hidden; 
+            height: 20px; /* Aumentado para que quepa el texto cómodamente */
+        }
+        .progress-bar { 
+            height: 100%; 
+            width: 0%; 
+            transition: width 0.5s ease-in-out; 
+        }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
+        
+        /* Texto flotante centralizado */
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #222; /* Color oscuro por defecto */
+            text-shadow: 0px 0px 2px rgba(255,255,255,0.8); /* Sombra clara para leer sobre fondos oscuros */
+            pointer-events: none;
+        }
         
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
     </style>
@@ -67,6 +95,7 @@
                 </div>
                 <div class="progress-container">
                     <div id="bar-combustible" class="progress-bar bg-combustible" style="width: 0%;"></div>
+                    <div id="p-combustible" class="progress-text">0%</div>
                 </div>
             </div>
 
@@ -77,6 +106,7 @@
                 </div>
                 <div class="progress-container">
                     <div id="bar-agua" class="progress-bar bg-agua" style="width: 0%;"></div>
+                    <div id="p-agua" class="progress-text">0%</div>
                 </div>
             </div>
 
@@ -108,7 +138,6 @@
 
             // Buscador avanzado de fila numérica para el pH
             for (let i = 0; i < filas.length; i++) {
-                // Parsea la fila considerando comas simples
                 const columnas = filas[i].split(",").map(col => col.replace(/^"|"$/g, '').trim());
                 const valorPH = columnas[0];
                 const esNumeroValido = /^\d+(\.\d+)?$/.test(valorPH);
@@ -119,7 +148,6 @@
                 }
             }
 
-            // Plan de respaldo si falla el detector automático
             if (!filaDatos && filas.length > 0) {
                 filaDatos = filas[filas.length - 1].split(",").map(col => col.replace(/^"|"$/g, '').trim());
             }
@@ -148,29 +176,32 @@
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
 
-            // Suministros y Mantenimiento
-            if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
-            if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
-            
-            // AJUSTE CORRECCIÓN DE FECHA CORTE: Aseguramos mapear correctamente las columnas 15 y 16 limpias
-            document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
-            document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
+            // Mantenimiento de etiquetas de texto principales
+            document.getElementById('txt-combustible').innerText = filaDatos[13] ? filaDatos[13] + " Gals" : '--';
+            document.getElementById('txt-agua').innerText        = filaDatos[14] ? filaDatos[14] + " Mts³" : '--';
 
-            // --- CONTROL DE PORCENTAJES EN BARRAS DE PROGRESO ---
+            // --- CÁLCULO Y AGREGADO DE PORCENTAJES EN BARRAS ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
             // CONFIGURACIÓN DE CAPACIDADES MÁXIMAS:
-            // Define aquí el tamaño completo de tus tanques para calcular el porcentaje real
-            const CAPACIDAD_MAX_COMBUSTIBLE = 300; // Ajustado porque actualmente tienes 250 Gals
-            const CAPACIDAD_MAX_AGUA = 50;         // Ajustado porque actualmente tienes 33 Mts³
+            const CAPACIDAD_MAX_COMBUSTIBLE = 300; 
+            const CAPACIDAD_MAX_AGUA = 50;         
 
-            let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
-            let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
+            let porcCombustible = Math.min(Math.max((combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100, 0), 100); 
+            let porcAgua = Math.min(Math.max((aguaNum / CAPACIDAD_MAX_AGUA) * 100, 0), 100); 
 
-            // Aplicamos los estilos de porcentaje dinámicamente de forma limpia
-            document.getElementById('bar-combustible').style.width = Math.min(Math.max(porcCombustible, 0), 100) + "%";
-            document.getElementById('bar-agua').style.width = Math.min(Math.max(porcAgua, 0), 100) + "%";
+            // 1. Asignamos el porcentaje visual a las barras de progreso
+            document.getElementById('bar-combustible').style.width = porcCombustible + "%";
+            document.getElementById('bar-agua').style.width = porcAgua + "%";
+
+            // 2. Escribimos el porcentaje en texto sobre las barras
+            document.getElementById('p-combustible').innerText = Math.round(porcCombustible) + "%";
+            document.getElementById('p-agua').innerText        = Math.round(porcAgua) + "%";
+
+            // AJUSTE CORRECCIÓN DE FECHA CORTE
+            document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
+            document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
             // Mostrar estampa de sincronización exitosa
             const ahora = new Date();
