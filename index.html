@@ -14,7 +14,7 @@
         .value { color: #222; font-weight: bold; }
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* --- NUEVO ESTILO PARA LAS BARRAS CON TEXTO PORCENTAJE --- */
+        /* Estilos de las Barras de Progreso */
         .progress-container { 
             position: relative; 
             width: 100%; 
@@ -23,7 +23,7 @@
             margin-top: 6px; 
             margin-bottom: 16px; 
             overflow: hidden; 
-            height: 20px; /* Aumentado para que quepa el texto cómodamente */
+            height: 20px; 
         }
         .progress-bar { 
             height: 100%; 
@@ -33,7 +33,7 @@
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
         
-        /* Texto flotante centralizado */
+        /* Texto del porcentaje centrado en la barra */
         .progress-text {
             position: absolute;
             width: 100%;
@@ -43,8 +43,8 @@
             transform: translate(-50%, -50%);
             font-size: 0.85em;
             font-weight: bold;
-            color: #222; /* Color oscuro por defecto */
-            text-shadow: 0px 0px 2px rgba(255,255,255,0.8); /* Sombra clara para leer sobre fondos oscuros */
+            color: #222; 
+            text-shadow: 0px 0px 2px rgba(255,255,255,0.8); 
             pointer-events: none;
         }
         
@@ -130,13 +130,10 @@
             if (!respuesta.ok) throw new Error("No se pudo conectar con el Excel.");
             
             const textoCSV = await respuesta.text();
-            
-            // Separamos el documento por líneas limpias
             const filas = textoCSV.split(/\r?\n/).map(f => f.trim()).filter(f => f.length > 0);
             
             let filaDatos = null;
 
-            // Buscador avanzado de fila numérica para el pH
             for (let i = 0; i < filas.length; i++) {
                 const columnas = filas[i].split(",").map(col => col.replace(/^"|"$/g, '').trim());
                 const valorPH = columnas[0];
@@ -158,8 +155,6 @@
             }
 
             // --- INYECCIÓN DE DATOS EN LAS CASILLAS ---
-            
-            // Planta de Tratamiento
             document.getElementById('ph').innerText              = filaDatos[0] || '--';  
             document.getElementById('tds').innerText             = filaDatos[1] || '--';  
             document.getElementById('dureza').innerText          = filaDatos[2] || '--';  
@@ -171,39 +166,39 @@
             document.getElementById('microbiologico').innerText  = filaDatos[8] || '--';  
             document.getElementById('fisicoquimico').innerText   = filaDatos[9] || '--';  
             
-            // Gestión Operativa
             document.getElementById('cateter').innerText         = filaDatos[10] || '--'; 
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
 
-            // Mantenimiento de etiquetas de texto principales
             document.getElementById('txt-combustible').innerText = filaDatos[13] ? filaDatos[13] + " Gals" : '--';
             document.getElementById('txt-agua').innerText        = filaDatos[14] ? filaDatos[14] + " Mts³" : '--';
 
-            // --- CÁLCULO Y AGREGADO DE PORCENTAJES EN BARRAS ---
-            let combNum = parseFloat(filaDatos[13]) || 0;
-            let aguaNum = parseFloat(filaDatos[14]) || 0;
+            // --- NUEVA CONFIGURACIÓN DE CAPACIDADES REALES (CONVERSIÓN DE UNIDADES) ---
+            let combGals = parseFloat(filaDatos[13]) || 0;
+            let aguaM3 = parseFloat(filaDatos[14]) || 0;
             
-            // CONFIGURACIÓN DE CAPACIDADES MÁXIMAS:
-            const CAPACIDAD_MAX_COMBUSTIBLE = 300; 
-            const CAPACIDAD_MAX_AGUA = 50;         
+            // 1. Combustible: Convertimos los galones del Excel a Litros (1 Galón ≈ 3.78541 Litros)
+            let combLitros = combGals * 3.78541;
+            const CAPACIDAD_MAX_COMBUSTIBLE_LITROS = 250; 
 
-            let porcCombustible = Math.min(Math.max((combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100, 0), 100); 
-            let porcAgua = Math.min(Math.max((aguaNum / CAPACIDAD_MAX_AGUA) * 100, 0), 100); 
+            // 2. Agua: La capacidad es 33,500 Litros, que equivalen a 33.5 Mts³
+            const CAPACIDAD_MAX_AGUA_M3 = 33.5;         
 
-            // 1. Asignamos el porcentaje visual a las barras de progreso
+            // Cálculo matemático de porcentajes exactos
+            let porcCombustible = Math.min(Math.max((combLitros / CAPACIDAD_MAX_COMBUSTIBLE_LITROS) * 100, 0), 100); 
+            let porcAgua = Math.min(Math.max((aguaM3 / CAPACIDAD_MAX_AGUA_M3) * 100, 0), 100); 
+
+            // Asignación física a las barras
             document.getElementById('bar-combustible').style.width = porcCombustible + "%";
             document.getElementById('bar-agua').style.width = porcAgua + "%";
 
-            // 2. Escribimos el porcentaje en texto sobre las barras
+            // Renderizado del texto de porcentaje dentro de las barras
             document.getElementById('p-combustible').innerText = Math.round(porcCombustible) + "%";
             document.getElementById('p-agua').innerText        = Math.round(porcAgua) + "%";
 
-            // AJUSTE CORRECCIÓN DE FECHA CORTE
             document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
-            // Mostrar estampa de sincronización exitosa
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
 
@@ -213,7 +208,6 @@
         }
     }
 
-    // Inicialización automática y refresco continuo
     actualizarDashboard();
     setInterval(actualizarDashboard, 15000);
 </script>
