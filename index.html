@@ -10,17 +10,31 @@
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
         
-        /* Subapartados internos para Gestión Operativa */
-        h3 { color: #7f8c8d; font-size: 0.95em; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
+        /* Estilos para los Subapartados de Gestión Operativa */
+        .section-title { color: #7f8c8d; font-size: 0.85em; font-weight: bold; margin: 18px 0 6px 0; letter-spacing: 0.8px; }
         
         .data-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #f9f9f9; align-items: center; padding-bottom: 4px; }
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* Barras de progreso optimizadas (Un poco más legibles pero manteniendo el formato original) */
-        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; position: relative; }
-        .progress-bar { height: 12px; border-radius: 4px; width: 0%; transition: width 0.5s ease-in-out; display: flex; align-items: center; justify-content: center; color: white; font-size: 9px; font-weight: bold; }
+        /* Contenedor de la barra */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; }
+        
+        /* Barra de progreso optimizada: texto legible, centrado y con sombra para alto contraste */
+        .progress-bar { 
+            height: 14px; 
+            border-radius: 4px; 
+            width: 0%; 
+            transition: width 0.5s ease-in-out; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 10px; 
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+        }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
         
@@ -57,14 +71,14 @@
         <div class="card">
             <h2>📦 Gestión Operativa</h2>
             
-            <h3>📦 Almacén</h3>
+            <div class="section-title">📦 ALMACÉN</div>
             <div class="data-row"><span class="label">Kit de Catéter Disponible:</span> <span class="value" id="cateter">--</span></div>
             <div class="data-row"><span class="label">Kit de Fístula Disponible:</span> <span class="value" id="fistula">--</span></div>
             
-            <h3>🏥 Sala de Hemodiálisis</h3>
+            <div class="section-title">🏥 SALA DE HEMODIÁLISIS</div>
             <div class="data-row"><span class="label">Pacientes en Sala:</span> <span class="value" id="pacientes">--</span></div>
 
-            <h3>🪑 Recepción</h3>
+            <div class="section-title">🪑 RECEPCIÓN</div>
             <div class="data-row"><span class="label">Pacientes en Espera:</span> <span class="value" id="pacientes-espera">--</span></div>
         </div>
 
@@ -135,7 +149,7 @@
                 return;
             }
 
-            // --- INYECCIÓN DE DATOS ---
+            // --- INYECCIÓN DE DATOS EN PANTALLA ---
             document.getElementById('ph').innerText              = filaDatos[0] || '--';  
             document.getElementById('tds').innerText             = filaDatos[1] || '--';  
             document.getElementById('dureza').innerText          = filaDatos[2] || '--';  
@@ -147,23 +161,24 @@
             document.getElementById('microbiologico').innerText  = filaDatos[8] || '--';  
             document.getElementById('fisicoquimico').innerText   = filaDatos[9] || '--';  
             
-            // Gestión Operativa
+            // Sección Gestión Operativa
             document.getElementById('cateter').innerText         = filaDatos[10] || '--'; 
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
-            document.getElementById('pacientes-espera').innerText = filaDatos[17] || '--'; // Asignado a la col 17 del Excel
+            document.getElementById('pacientes-espera').innerText = filaDatos[17] || '--';
 
-            // Suministros texto
+            // Suministros
             if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
             if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
             
             document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
-            // --- CONTROL DE PORCENTAJES REALES ---
+            // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
+            // Capacidades de planta asignadas según tus requerimientos
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
 
@@ -173,7 +188,7 @@
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
-            // Inyección en barras con tamaño optimizado de texto
+            // Renderizado dinámico en las barras de progreso optimizadas
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = Math.round(pCombLimpio) + "%";
@@ -182,7 +197,7 @@
             barAgua.style.width = pAguaLimpio + "%";
             barAgua.innerText = Math.round(pAguaLimpio) + "%";
 
-            // Mostrar estampa de sincronización exitosa
+            // Sello de tiempo de actualización
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
 
