@@ -294,7 +294,7 @@
 
             const barAgua = document.getElementById('bar-agua');
             barAgua.style.width = pAguaLimpio + "%";
-            barAgua.innerText = `${Math.round(pAguaLimpio)}% (${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³)`;
+            barAgua.innerText = `${Math.round(pAguaLimpio)}%`;
 
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
