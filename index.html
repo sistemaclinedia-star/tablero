@@ -142,7 +142,8 @@
     <script>
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
-    const TIEMPO_REFRESCO = 30; 
+    // Variables de control configuradas a 120 segundos
+    const TIEMPO_REFRESCO = 120; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
     async function actualizarDashboard() {
@@ -259,18 +260,24 @@
                 tarjetaRecepcion.style.border = 'none';
             }
 
-            // Suministros
-            if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
-            if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
-            
+            // Mantenimientos
             document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
+            // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES Y CAPACIDADES TOTALES ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
+
+            // Inyección de textos de etiquetas principales en formato Actual / Capacidad Máxima
+            if(filaDatos[13]) {
+                document.getElementById('txt-combustible').innerText = `${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals`;
+            }
+            if(filaDatos[14]) {
+                document.getElementById('txt-agua').innerText = `${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³`;
+            }
 
             let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
             let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
@@ -278,13 +285,14 @@
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
+            // Actualización de barras con formato de Texto Detallado integrado
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
-            barComb.innerText = Math.round(pCombLimpio) + "%";
+            barComb.innerText = `${Math.round(pCombLimpio)}% (${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals)`;
 
             const barAgua = document.getElementById('bar-agua');
             barAgua.style.width = pAguaLimpio + "%";
-            barAgua.innerText = Math.round(pAguaLimpio) + "%";
+            barAgua.innerText = `${Math.round(pAguaLimpio)}% (${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³)`;
 
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
@@ -295,7 +303,7 @@
         }
     }
 
-    // Generador electrónico de sonido (Pítido doble nítido)
+    // Generador electrónico de sonido (Volumen regulado al 1.0)
     function ejecutarSonidoAlerta() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -303,10 +311,10 @@
             
             const audioCtx = new AudioContext();
             
-            // Primer pitido
-            emitirTono(audioCtx, 587.33, 0.15, 0); // Nota Re5
-            // Segundo pitido un poco más alto
-            emitirTono(audioCtx, 698.46, 0.15, 0.2); // Nota Fa5
+            // Primer pitido (Re5)
+            emitirTono(audioCtx, 587.33, 0.15, 0); 
+            // Segundo pitido (Fa5)
+            emitirTono(audioCtx, 698.46, 0.15, 0.2); 
             
         } catch (e) {
             console.log("Audio bloqueado temporalmente por el navegador. Haz clic en la pantalla.");
@@ -321,8 +329,8 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(frecuencia, ctx.currentTime);
             
-            gain.gain.setValueAtTime(1.00, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); // Suaviza el final
+            gain.gain.setValueAtTime(1.00, ctx.currentTime); // Volumen al máximo (escala de 0.0 a 1.0)
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); 
             
             osc.connect(gain);
             gain.connect(ctx.destination);
