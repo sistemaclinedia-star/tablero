@@ -2,6 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <title>Dashboard Clinedia (Conectado en Vivo)</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 20px; }
@@ -142,7 +147,7 @@
     <script>
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
-    // Variables de control configuradas a 120 segundos
+    // Sincronización optimizada a 120 segundos
     const TIEMPO_REFRESCO = 120; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
@@ -242,11 +247,11 @@
                         contenedorEspera.appendChild(li);
                     });
 
-                    // Alerta Visual (Amarillo)
+                    // Alerta Visual (Amarillo de aviso)
                     tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
                     tarjetaRecepcion.style.border = '2px solid #ffc107';
                     
-                    // 🔔 FUNCIÓN DE AUDIO REFORZADA
+                    // 🔔 Emisión del sonido de alerta reforzado
                     ejecutarSonidoAlerta();
 
                 } else {
@@ -264,14 +269,14 @@
             document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
-            // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES Y CAPACIDADES TOTALES ---
+            // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES Y CAPACIDADES ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
 
-            // Inyección de textos de etiquetas principales en formato Actual / Capacidad Máxima
+            // Etiquetas principales en formato Actual / Máximo
             if(filaDatos[13]) {
                 document.getElementById('txt-combustible').innerText = `${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals`;
             }
@@ -285,7 +290,7 @@
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
-            // Actualización de barras con formato de Texto Detallado integrado
+            // Inyección de Texto Detallado DENTRO de las barras de progreso
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = `${Math.round(pCombLimpio)}% (${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals)`;
@@ -303,7 +308,7 @@
         }
     }
 
-    // Generador electrónico de sonido (Volumen regulado al 1.0)
+    // Generador electrónico de sonido (Volumen regulado al máximo 1.0)
     function ejecutarSonidoAlerta() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -311,9 +316,9 @@
             
             const audioCtx = new AudioContext();
             
-            // Primer pitido (Re5)
+            // Primer pitido corto (Re5)
             emitirTono(audioCtx, 587.33, 0.15, 0); 
-            // Segundo pitido (Fa5)
+            // Segundo pitido corto (Fa5)
             emitirTono(audioCtx, 698.46, 0.15, 0.2); 
             
         } catch (e) {
@@ -329,7 +334,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(frecuencia, ctx.currentTime);
             
-            gain.gain.setValueAtTime(1.00, ctx.currentTime); // Volumen al máximo (escala de 0.0 a 1.0)
+            gain.gain.setValueAtTime(1.00, ctx.currentTime); // Volumen full
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); 
             
             osc.connect(gain);
