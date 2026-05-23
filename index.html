@@ -148,7 +148,8 @@
                     
     async function actualizarDashboard() {
         try {
-            const respuesta = await fetch(URL_GOOGLE_SHEET);
+            // Agregamos un parámetro único basado en el tiempo actual para evitar la caché
+const respuesta = await fetch(`${URL_GOOGLE_SHEET}&_=${new Date().getTime()}`);
             if (!respuesta.ok) throw new Error("No se pudo conectar con el Excel.");
             
             const textoCSV = await respuesta.text();
