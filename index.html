@@ -321,7 +321,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(frecuencia, ctx.currentTime);
             
-            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.setValueAtTime(0.30, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); // Suaviza el final
             
             osc.connect(gain);
