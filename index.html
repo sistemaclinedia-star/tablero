@@ -142,7 +142,7 @@
     <script>
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
-    const TIEMPO_REFRESCO = 60; 
+    const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
     async function actualizarDashboard() {
@@ -321,7 +321,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(frecuencia, ctx.currentTime);
             
-            gain.gain.setValueAtTime(0.30, ctx.currentTime);
+            gain.gain.setValueAtTime(1.00, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); // Suaviza el final
             
             osc.connect(gain);
