@@ -147,7 +147,7 @@
     <script>
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
-    // Sincronización optimizada a 120 segundos
+    // Sincronización fijada correctamente a 120 segundos
     const TIEMPO_REFRESCO = 120; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
@@ -251,7 +251,7 @@
                     tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
                     tarjetaRecepcion.style.border = '2px solid #ffc107';
                     
-                    // 🔔 Emisión del sonido de alerta reforzado
+                    // 🔔 Emisión del sonido de alerta
                     ejecutarSonidoAlerta();
 
                 } else {
@@ -269,28 +269,25 @@
             document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
-            // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES Y CAPACIDADES ---
+            // --- PROCESAMIENTO MATEMÁTICO DE SUMINISTROS (ACTUAL/CAPACIDAD) ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
 
-            // Etiquetas principales en formato Actual / Máximo
-            if(filaDatos[13]) {
-                document.getElementById('txt-combustible').innerText = `${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals`;
-            }
-            if(filaDatos[14]) {
-                document.getElementById('txt-agua').innerText = `${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³`;
-            }
+            // Forzar visualización en formato Actual / Capacidad Máxima en la esquina derecha
+            document.getElementById('txt-combustible').innerText = `${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals`;
+            document.getElementById('txt-agua').innerText        = `${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³`;
 
+            // Cálculo preciso de porcentajes para renderizar las barras de color
             let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
             let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
 
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
-            // Inyección de Texto Detallado DENTRO de las barras de progreso
+            // Inyección de Texto Detallado en formato combinado DENTRO de las barras de color
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = `${Math.round(pCombLimpio)}% (${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals)`;
