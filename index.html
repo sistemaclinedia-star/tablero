@@ -148,7 +148,7 @@
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
     // Sincronización fijada correctamente a 120 segundos
-    const TIEMPO_REFRESCO = 120; 
+    const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
     async function actualizarDashboard() {
@@ -290,7 +290,7 @@
             // Inyección de Texto Detallado en formato combinado DENTRO de las barras de color
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
-            barComb.innerText = `${Math.round(pCombLimpio)}% (${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals)`;
+            barComb.innerText = `${Math.round(pCombLimpio)}%`;
 
             const barAgua = document.getElementById('bar-agua');
             barAgua.style.width = pAguaLimpio + "%";
