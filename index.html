@@ -263,7 +263,7 @@
             if(filaDatos[13]) document.getElementById('txt-combustible').innerText = filaDatos[13] + " Gals";
             if(filaDatos[14]) document.getElementById('txt-agua').innerText        = filaDatos[14] + " Mts³";
             
-            document.getElementById('limpieza').innerText        = filaDatos[15] ? filaDatos[15] + " Días" : '--';
+            document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
             let combNum = parseFloat(filaDatos[13]) || 0;
