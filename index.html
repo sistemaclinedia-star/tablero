@@ -36,7 +36,7 @@
         /* Contenedor de la barra */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; }
         
-        /* Barras de progreso optimizadas: Altura ideal y letra perfectamente legible */
+        /* Barras de progreso optimizadas */
         .progress-bar { 
             height: 20px; 
             border-radius: 4px; 
@@ -142,19 +142,16 @@
     <script>
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
-    // Variables de control para el cronómetro dinámico (Configurado a 120 segundos)
     const TIEMPO_REFRESCO = 120; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
     async function actualizarDashboard() {
         try {
-            // Se agrega un parámetro único de tiempo (_=...) para evitar la caché del navegador
             const respuesta = await fetch(`${URL_GOOGLE_SHEET}&_=${new Date().getTime()}`);
             if (!respuesta.ok) throw new Error("No se pudo conectar con el Excel.");
             
             const textoCSV = await respuesta.text();
             
-            // Segmentación avanzada respetando los saltos de línea internos de la celda de nombres
             const filas = [];
             let filaActual = [];
             let campoActual = '';
@@ -228,7 +225,7 @@
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
 
-            // --- PROCESAMIENTO DE LA LISTA DE PACIENTES EN ESPERA (COLUMNA R) Y ALERTA ---
+            // --- PROCESAMIENTO DE PACIENTES EN ESPERA Y AUDIO ALERTA ---
             const contenedorEspera = document.getElementById('pacientes-espera');
             const textoNombres = filaDatos[17];
             const tarjetaRecepcion = contenedorEspera.closest('.card');
@@ -244,23 +241,12 @@
                         contenedorEspera.appendChild(li);
                     });
 
-                    // Activación de Alerta Visual (Fondo Amarillo de Advertencia)
+                    // Alerta Visual (Amarillo)
                     tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
                     tarjetaRecepcion.style.border = '2px solid #ffc107';
                     
-                    // Activación de Alerta Sonora (Breve bip electrónico)
-                    if (typeof window.AudioContext !== "undefined" || typeof window.webkitAudioContext !== "undefined") {
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        const oscillator = audioCtx.createOscillator();
-                        const gainNode = audioCtx.createGain();
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioCtx.destination);
-                        oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); 
-                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); 
-                        oscillator.start();
-                        oscillator.stop(audioCtx.currentTime + 0.3); 
-                    }
+                    // 🔔 FUNCIÓN DE AUDIO REFORZADA
+                    ejecutarSonidoAlerta();
 
                 } else {
                     contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
@@ -280,7 +266,6 @@
             document.getElementById('limpieza').innerText        = filaDatos[15] ? filaDatos[15] + " Días" : '--';
             document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
 
-            // --- PROCESAMIENTO MATEMÁTICO DE LOS PORCENTAJES ---
             let combNum = parseFloat(filaDatos[13]) || 0;
             let aguaNum = parseFloat(filaDatos[14]) || 0;
             
@@ -293,7 +278,6 @@
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
-            // Renderizado en las barras grandes
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = Math.round(pCombLimpio) + "%";
@@ -311,20 +295,55 @@
         }
     }
 
-    // Función del cronómetro segundo a segundo
+    // Generador electrónico de sonido (Pítido doble nítido)
+    function ejecutarSonidoAlerta() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            
+            const audioCtx = new AudioContext();
+            
+            // Primer pitido
+            emitirTono(audioCtx, 587.33, 0.15, 0); // Nota Re5
+            // Segundo pitido un poco más alto
+            emitirTono(audioCtx, 698.46, 0.15, 0.2); // Nota Fa5
+            
+        } catch (e) {
+            console.log("Audio bloqueado temporalmente por el navegador. Haz clic en la pantalla.");
+        }
+    }
+
+    function emitirTono(ctx, frecuencia, duracion, retraso) {
+        setTimeout(() => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(frecuencia, ctx.currentTime);
+            
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); // Suaviza el final
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + duracion);
+        }, retraso * 1000);
+    }
+
     function iniciarCronometro() {
         setInterval(() => {
             tiempoRestante--;
             document.getElementById('countdown').innerText = tiempoRestante;
             
             if (tiempoRestante <= 0) {
-                tiempoRestante = TIEMPO_REFRESCO; // Reinicia el tiempo
-                actualizarDashboard();           // Ejecuta la consulta al Excel
+                tiempoRestante = TIEMPO_REFRESCO; 
+                actualizarDashboard();           
             }
         }, 1000);
     }
 
-    // Ejecución inicial al cargar la página
     actualizarDashboard();
     iniciarCronometro();
 </script>
