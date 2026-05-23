@@ -22,43 +22,43 @@
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
         
-        /* Estilo especial para la lista de pacientes en espera */
-        .lista-espera { 
+        /* Estilo especial para las listas de pacientes */
+        .lista-pacientes { 
             width: 100%; 
-            margin: 5px 0 0 0; 
+            margin: 5px 0 12px 0; 
             padding-left: 20px; 
             color: #222; 
             font-weight: bold; 
             font-size: 0.95em;
             line-height: 1.5;
         }
-        .lista-espera li {
+        .lista-pacientes li {
             margin-bottom: 4px;
         }
 
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
         /* Contenedor de la barra */
-        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; margin-bottom: 12px; overflow: hidden; }
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 6px; margin-top: 6px; margin-bottom: 16px; overflow: hidden; }
         
-        /* Barras de progreso optimizadas */
+        /* 📏 Barras Grandes Optimizadas */
         .progress-bar { 
-            height: 20px; 
-            border-radius: 4px; 
+            height: 45px; 
+            border-radius: 6px; 
             width: 0%; 
             transition: width 0.5s ease-in-out; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             color: white; 
-            font-size: 13px; 
+            font-size: 24px; 
             font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
         }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
         
-        /* Barra e hilos de sincronización con cronómetro */
+        /* Cronómetro */
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
         .timer-badge { font-weight: bold; color: #f1c40f; }
     </style>
@@ -70,7 +70,7 @@
         <p>Estado del Sistema Sincronizado</p>
         <div class="status-sync">
             <span id="sync-time">Buscando datos del Excel...</span> 
-            | <span class="timer-badge">Próxima actualización en: <span id="countdown">120</span>s</span>
+            | <span class="timer-badge">Próxima actualización en: <span id="countdown">30</span>s</span>
         </div>
     </div>
 
@@ -104,8 +104,13 @@
             <div class="data-row"><span class="label">Pacientes en Sala:</span> <span class="value" id="pacientes">--</span></div>
 
             <div class="section-title">🪑 RECEPCIÓN</div>
-            <div class="label" style="margin-bottom: 5px;">Pacientes en Espera:</div>
-            <ul class="lista-espera" id="pacientes-espera">
+            <div class="label" style="margin-bottom: 5px; color: #2980b9;">Pacientes Programados en el Día:</div>
+            <ul class="lista-pacientes" id="pacientes-programados">
+                <li>--</li>
+            </ul>
+            
+            <div class="label" style="margin-bottom: 5px; color: #27ae60;">Pacientes en Espera:</div>
+            <ul class="lista-pacientes" id="pacientes-espera">
                 <li>--</li>
             </ul>
         </div>
@@ -147,7 +152,6 @@
     <script>
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     
-    // Sincronización fijada correctamente a 120 segundos
     const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
                     
@@ -231,7 +235,27 @@
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
 
-            // --- PROCESAMIENTO DE PACIENTES EN ESPERA Y AUDIO ALERTA ---
+            // --- 1. PROCESAMIENTO DE PACIENTES PROGRAMADOS (COLUMNA S -> ÍNDICE 18) ---
+            const contenedorProgramados = document.getElementById('pacientes-programados');
+            const textoProgramados = filaDatos[18]; 
+
+            if (textoProgramados && textoProgramados.trim() !== "" && textoProgramados !== '--') {
+                const listaProg = textoProgramados.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+                if(listaProg.length > 0) {
+                    contenedorProgramados.innerHTML = "";
+                    listaProg.forEach(nombre => {
+                        const li = document.createElement('li');
+                        li.innerText = nombre;
+                        contenedorProgramados.appendChild(li);
+                    });
+                } else {
+                    contenedorProgramados.innerHTML = "<li>No hay pacientes programados</li>";
+                }
+            } else {
+                contenedorProgramados.innerHTML = "<li>No hay pacientes programados</li>";
+            }
+
+            // --- 2. PROCESAMIENTO DE PACIENTES EN ESPERA (COLUMNA R -> ÍNDICE 17) ---
             const contenedorEspera = document.getElementById('pacientes-espera');
             const textoNombres = filaDatos[17];
             const tarjetaRecepcion = contenedorEspera.closest('.card');
@@ -247,13 +271,11 @@
                         contenedorEspera.appendChild(li);
                     });
 
-                    // Alerta Visual (Amarillo de aviso)
+                    // Alerta Visual de Espera Activa
                     tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
                     tarjetaRecepcion.style.border = '2px solid #ffc107';
                     
-                    // 🔔 Emisión del sonido de alerta
                     ejecutarSonidoAlerta();
-
                 } else {
                     contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
                     tarjetaRecepcion.style.backgroundColor = 'white';
@@ -276,18 +298,16 @@
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
 
-            // Forzar visualización en formato Actual / Capacidad Máxima en la esquina derecha
             document.getElementById('txt-combustible').innerText = `${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals`;
             document.getElementById('txt-agua').innerText        = `${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³`;
 
-            // Cálculo preciso de porcentajes para renderizar las barras de color
             let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
             let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
 
             let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
             let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
 
-            // Inyección de Texto Detallado en formato combinado DENTRO de las barras de color
+            // Renderizado en las barras de progreso GRANDES
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = `${Math.round(pCombLimpio)}%`;
@@ -305,21 +325,21 @@
         }
     }
 
-    // Generador electrónico de sonido (Volumen regulado al máximo 1.0)
     function ejecutarSonidoAlerta() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
             
-            const audioCtx = new AudioContext();
+            if (!window.miAudioCtx) {
+                window.miAudioCtx = new AudioContext();
+            }
+            const audioCtx = window.miAudioCtx;
+            if (audioCtx.state === 'suspended') return;
             
-            // Primer pitido corto (Re5)
             emitirTono(audioCtx, 587.33, 0.15, 0); 
-            // Segundo pitido corto (Fa5)
             emitirTono(audioCtx, 698.46, 0.15, 0.2); 
-            
         } catch (e) {
-            console.log("Audio bloqueado temporalmente por el navegador. Haz clic en la pantalla.");
+            console.log("Audio en espera de interacción.");
         }
     }
 
@@ -327,16 +347,12 @@
         setTimeout(() => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            
             osc.type = 'sine';
             osc.frequency.setValueAtTime(frecuencia, ctx.currentTime);
-            
-            gain.gain.setValueAtTime(1.00, ctx.currentTime); // Volumen full
+            gain.gain.setValueAtTime(1.00, ctx.currentTime); 
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duracion); 
-            
             osc.connect(gain);
             gain.connect(ctx.destination);
-            
             osc.start();
             osc.stop(ctx.currentTime + duracion);
         }, retraso * 1000);
@@ -346,7 +362,6 @@
         setInterval(() => {
             tiempoRestante--;
             document.getElementById('countdown').innerText = tiempoRestante;
-            
             if (tiempoRestante <= 0) {
                 tiempoRestante = TIEMPO_REFRESCO; 
                 actualizarDashboard();           
