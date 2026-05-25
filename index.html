@@ -154,7 +154,7 @@
             
             <div>
                 <div class="data-row">
-                    <span class="label">Tanque #1 (9 m³):</span> 
+                    <span class="label">Tanque Grande 1 (9 m³):</span> 
                     <span class="value" id="txt-ox-g1">--</span>
                 </div>
                 <div class="progress-container">
@@ -164,7 +164,7 @@
 
             <div>
                 <div class="data-row">
-                    <span class="label">Tanque #2 (9 m³):</span> 
+                    <span class="label">Tanque Grande 2 (9 m³):</span> 
                     <span class="value" id="txt-ox-g2">--</span>
                 </div>
                 <div class="progress-container">
@@ -174,7 +174,7 @@
 
             <div>
                 <div class="data-row">
-                    <span class="label">Tanque #1 (1 m³):</span> 
+                    <span class="label">Tanque Pequeño 1 (1 m³):</span> 
                     <span class="value" id="txt-ox-peq1">--</span>
                 </div>
                 <div class="progress-container">
@@ -184,7 +184,7 @@
 
             <div>
                 <div class="data-row">
-                    <span class="label">Tanque #2 (1 m³):</span> 
+                    <span class="label">Tanque Pequeño 2 (1 m³):</span> 
                     <span class="value" id="txt-ox-peq2">--</span>
                 </div>
                 <div class="progress-container">
@@ -194,7 +194,7 @@
 
             <div>
                 <div class="data-row">
-                    <span class="label">Tanque #3 (1 m³):</span> 
+                    <span class="label">Tanque Pequeño 3 (1 m³):</span> 
                     <span class="value" id="txt-ox-peq3">--</span>
                 </div>
                 <div class="progress-container">
@@ -262,17 +262,15 @@
                 filas.push(filaActual);
             }
 
-            // Mapeo dinámico de filas por su número real en Excel
-            // El array 'filas' inicia en el índice 0 (Fila 1 de Excel)
-            let filaDatos3 = filas[2]; // Fila 3 de Excel (Datos principales)
-            let filaDatos6 = filas[5]; // Fila 6 de Excel (Datos Oxígeno)
+            let filaDatos3 = filas[2]; 
+            let filaDatos6 = filas[5]; 
 
             if (!filaDatos3) {
-                document.getElementById('sync-time').innerText = "Error: Fila 3 no encontrada.";
+                document.getElementById('sync-time').innerText = "Error: Estructura de datos principal no leída.";
                 return;
             }
 
-            // --- INYECCIÓN DE DATOS DESDE FILA 3 ---
+            // --- INYECCIÓN CARD 1: PLANTA DE TRATAMIENTO ---
             document.getElementById('ph').innerText              = filaDatos3[0] || '--';  
             document.getElementById('tds').innerText             = filaDatos3[1] || '--';  
             document.getElementById('dureza').innerText          = filaDatos3[2] || '--';  
@@ -284,16 +282,15 @@
             document.getElementById('microbiologico').innerText  = filaDatos3[8] || '--';  
             document.getElementById('fisicoquimico').innerText   = filaDatos3[9] || '--';  
             
+            // --- INYECCIÓN CARD 2: GESTIÓN OPERATIVA ---
             document.getElementById('cateter').innerText         = filaDatos3[10] || '--'; 
             document.getElementById('fistula').innerText         = filaDatos3[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos3[12] || '--';
 
-            // Datos biomédicos desde columnas T, U, V de fila 3
             document.getElementById('maq-uso').innerText         = filaDatos3[19] || '0';
-            document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
+            document.getElementById('maq-disp').innerText        = filaDatos3[20] || '13';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
-            // --- PACIENTES PROGRAMADOS ---
             const contenedorProgramados = document.getElementById('pacientes-programados');
             const textoProgramados = filaDatos3[18]; 
             if (textoProgramados && textoProgramados.trim() !== "" && textoProgramados !== '--') {
@@ -312,7 +309,6 @@
                 contenedorProgramados.innerHTML = "<li>No hay pacientes programados</li>";
             }
 
-            // --- PACIENTES EN ESPERA ---
             const contenedorEspera = document.getElementById('pacientes-espera');
             const textoNombres = filaDatos3[17];
             const tarjetaRecepcion = contenedorEspera.closest('.card');
@@ -340,10 +336,10 @@
                 tarjetaRecepcion.style.border = 'none';
             }
 
+            // --- INYECCIÓN CARD 3: SUMINISTROS Y BARRAS ---
             document.getElementById('limpieza').innerText        = filaDatos3[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos3[16] || '--';
 
-            // Suministros principales
             let combNum = parseFloat(filaDatos3[13]) || 0;
             let aguaNum = parseFloat(filaDatos3[14]) || 0;
             
@@ -365,7 +361,7 @@
             barAgua.innerText = `${Math.round(pAguaLimpio)}%`;
 
 
-            // --- 🟢 PROCESAMIENTO MATEMÁTICO EXTRAÍDO DESDE LA FILA 6 ---
+            // --- 🟢 MATEMÁTICA CORREGIDA PARA ESCALA 2000 PSI MÁXIMO ---
             let oxG1Num   = 0;
             let oxG2Num   = 0;
             let oxPeq1Num = 0;
@@ -373,27 +369,27 @@
             let oxPeq3Num = 0;
 
             if (filaDatos6) {
-                oxG1Num   = parseFloat(filaDatos6[13]) || 0; // Columna N
-                oxG2Num   = parseFloat(filaDatos6[14]) || 0; // Columna O
-                oxPeq1Num = parseFloat(filaDatos6[15]) || 0; // Columna P
-                oxPeq2Num = parseFloat(filaDatos6[16]) || 0; // Columna Q
-                oxPeq3Num = parseFloat(filaDatos6[17]) || 0; // Columna R
+                oxG1Num   = parseFloat(filaDatos6[13]) || 0; // Col N
+                oxG2Num   = parseFloat(filaDatos6[14]) || 0; // Col O
+                oxPeq1Num = parseFloat(filaDatos6[15]) || 0; // Col P
+                oxPeq2Num = parseFloat(filaDatos6[16]) || 0; // Col Q
+                oxPeq3Num = parseFloat(filaDatos6[17]) || 0; // Col R
             }
 
-            const MAX_GRANDE = 9; 
-            const MAX_PEQ    = 1;  
+            // Ajuste definitivo a 2000 PSI como llenado total (100%)
+            const MAX_PSI = 2000;  
 
-            document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_GRANDE} m³`;
-            document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_GRANDE} m³`;
-            document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PEQ} m³`;
-            document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PEQ} m³`;
-            document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PEQ} m³`;
+            document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PSI} PSI`;
 
-            let pOxG1   = Math.min(Math.max((oxG1Num / MAX_GRANDE) * 100, 0), 100);
-            let pOxG2   = Math.min(Math.max((oxG2Num / MAX_GRANDE) * 100, 0), 100);
-            let pOxPeq1 = Math.min(Math.max((oxPeq1Num / MAX_PEQ) * 100, 0), 100);
-            let pOxPeq2 = Math.min(Math.max((oxPeq2Num / MAX_PEQ) * 100, 0), 100);
-            let pOxPeq3 = Math.min(Math.max((oxPeq3Num / MAX_PEQ) * 100, 0), 100);
+            let pOxG1   = Math.min(Math.max((oxG1Num / MAX_PSI) * 100, 0), 100);
+            let pOxG2   = Math.min(Math.max((oxG2Num / MAX_PSI) * 100, 0), 100);
+            let pOxPeq1 = Math.min(Math.max((oxPeq1Num / MAX_PSI) * 100, 0), 100);
+            let pOxPeq2 = Math.min(Math.max((oxPeq2Num / MAX_PSI) * 100, 0), 100);
+            let pOxPeq3 = Math.min(Math.max((oxPeq3Num / MAX_PSI) * 100, 0), 100);
 
             const barG1 = document.getElementById('bar-ox-g1');
             barG1.style.width = pOxG1 + "%";
@@ -414,7 +410,6 @@
             const barPeq3 = document.getElementById('bar-ox-peq3');
             barPeq3.style.width = pOxPeq3 + "%";
             barPeq3.innerText = `${Math.round(pOxPeq3)}%`;
-
 
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
