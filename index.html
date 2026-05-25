@@ -17,10 +17,16 @@
         
         /* Estilos para los Subapartados de Gestión Operativa */
         .section-title { color: #7f8c8d; font-size: 0.85em; font-weight: bold; margin: 18px 0 6px 0; letter-spacing: 0.8px; }
+        .subsection-title { color: #34495e; font-size: 0.8em; font-weight: bold; margin: 12px 0 6px 0; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
         
         .data-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #f9f9f9; align-items: center; padding-bottom: 4px; }
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
+        
+        /* Estilos específicos para estados de máquinas */
+        .val-uso { color: #e74c3c; font-weight: bold; }
+        .val-disp { color: #27ae60; font-weight: bold; }
+        .val-mto { color: #f39c12; font-weight: bold; }
         
         /* Estilo especial para las listas de pacientes */
         .lista-pacientes { 
@@ -102,6 +108,11 @@
             
             <div class="section-title">🏥 SALA DE HEMODIÁLISIS</div>
             <div class="data-row"><span class="label">Pacientes en Sala:</span> <span class="value" id="pacientes">--</span></div>
+            
+            <div class="subsection-title">⚙️ Disponibilidad de Máquinas</div>
+            <div class="data-row"><span class="label">En Uso:</span> <span class="val-uso" id="maq-uso">--</span></div>
+            <div class="data-row"><span class="label">Disponible:</span> <span class="val-disp" id="maq-disp">--</span></div>
+            <div class="data-row"><span class="label">En Mantenimiento:</span> <span class="val-mto" id="maq-mto">--</span></div>
 
             <div class="section-title">🪑 RECEPCIÓN</div>
             <div class="label" style="margin-bottom: 5px; color: #2980b9;">Pacientes Programados en el Día:</div>
@@ -234,6 +245,11 @@
             document.getElementById('cateter').innerText         = filaDatos[10] || '--'; 
             document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
+
+            // --- INYECCIÓN DE DATOS DE MAQUINAS (COLUMNAS T, U, V -> ÍNDICES 19, 20, 21) ---
+            document.getElementById('maq-uso').innerText         = filaDatos[19] || '0';
+            document.getElementById('maq-disp').innerText        = filaDatos[20] || '0';
+            document.getElementById('maq-mto').innerText         = filaDatos[21] || '0';
 
             // --- 1. PROCESAMIENTO DE PACIENTES PROGRAMADOS (COLUMNA S -> ÍNDICE 18) ---
             const contenedorProgramados = document.getElementById('pacientes-programados');
