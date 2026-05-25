@@ -262,11 +262,38 @@
                 filas.push(filaActual);
             }
 
-            let filaDatos3 = filas[2]; 
-            let filaDatos6 = filas[5]; 
+            // --- ESCANEO INTELIGENTE DE FILAS ---
+            let filaDatos3 = null;
+            let filaDatos6 = null;
+
+            // 1. Encontrar la fila de la Planta de Tratamiento (Fila 3 usualmente)
+            for (let i = 0; i < filas.length; i++) {
+                const valorPH = filas[i][0];
+                if (valorPH && /^\d+([.,]\d+)?$/.test(valorPH)) {
+                    filaDatos3 = filas[i];
+                    break;
+                }
+            }
+
+            // 2. Encontrar la fila de valores numéricos de Oxígeno de forma dinámica
+            for (let i = 0; i < filas.length; i++) {
+                // Buscamos la fila que tenga las etiquetas descriptivas
+                const celdaEtiqueta = filas[i][13] || '';
+                if (celdaEtiqueta.toUpperCase().includes("TANQUE DE OXIGENO") || celdaEtiqueta.toUpperCase().includes("TANQUE DE O")) {
+                    // La fila con los números reales ingresados siempre será la siguiente abajo
+                    if (filas[i + 1]) {
+                        filaDatos6 = filas[i + 1];
+                    }
+                    break;
+                }
+            }
+
+            // Fallback histórico por si falla el rastreo dinámico
+            if (!filaDatos3 && filas.length > 2) filaDatos3 = filas[2];
+            if (!filaDatos6 && filas.length > 5) filaDatos6 = filas[5];
 
             if (!filaDatos3) {
-                document.getElementById('sync-time').innerText = "Error: Estructura de datos principal no leída.";
+                document.getElementById('sync-time').innerText = "Error: Datos principales del Excel no localizados.";
                 return;
             }
 
@@ -287,8 +314,9 @@
             document.getElementById('fistula').innerText         = filaDatos3[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos3[12] || '--';
 
+            // Mapeo dinámico del bloque BIOMÉDICO (Columnas T, U, V)
             document.getElementById('maq-uso').innerText         = filaDatos3[19] || '0';
-            document.getElementById('maq-disp').innerText        = filaDatos3[20] || '13';
+            document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
             const contenedorProgramados = document.getElementById('pacientes-programados');
@@ -361,7 +389,7 @@
             barAgua.innerText = `${Math.round(pAguaLimpio)}%`;
 
 
-            // --- 🟢 MATEMÁTICA CORREGIDA PARA ESCALA 2000 PSI MÁXIMO ---
+            // --- 🟢 PROCESAMIENTO BIEN MAPEADO DE VALORES DE OXÍGENO ---
             let oxG1Num   = 0;
             let oxG2Num   = 0;
             let oxPeq1Num = 0;
@@ -369,14 +397,13 @@
             let oxPeq3Num = 0;
 
             if (filaDatos6) {
-                oxG1Num   = parseFloat(filaDatos6[13]) || 0; // Col N
-                oxG2Num   = parseFloat(filaDatos6[14]) || 0; // Col O
-                oxPeq1Num = parseFloat(filaDatos6[15]) || 0; // Col P
-                oxPeq2Num = parseFloat(filaDatos6[16]) || 0; // Col Q
-                oxPeq3Num = parseFloat(filaDatos6[17]) || 0; // Col R
+                oxG1Num   = parseFloat(filaDatos6[13]) || 0; // Columna N
+                oxG2Num   = parseFloat(filaDatos6[14]) || 0; // Columna O
+                oxPeq1Num = parseFloat(filaDatos6[15]) || 0; // Columna P
+                oxPeq2Num = parseFloat(filaDatos6[16]) || 0; // Columna Q
+                oxPeq3Num = parseFloat(filaDatos6[17]) || 0; // Columna R
             }
 
-            // Ajuste definitivo a 2000 PSI como llenado total (100%)
             const MAX_PSI = 2000;  
 
             document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_PSI} PSI`;
