@@ -47,7 +47,7 @@
         /* Contenedor de la barra */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 6px; margin-top: 6px; margin-bottom: 16px; overflow: hidden; }
         
-        /* 📏 Barras Grandes Optimizadas */
+        /* Barras de progreso */
         .progress-bar { 
             height: 45px; 
             border-radius: 6px; 
@@ -63,6 +63,7 @@
         }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
+        .bg-oxigeno { background-color: #2ecc71; }
         
         /* Cronómetro */
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
@@ -109,7 +110,7 @@
             <div class="section-title">🏥 SALA DE HEMODIÁLISIS</div>
             <div class="data-row"><span class="label">Pacientes en Sala:</span> <span class="value" id="pacientes">--</span></div>
             
-            <div class="subsection-title">⚙️ DISPONIBILIDAD DE MAQUINAS</div>
+            <div class="subsection-title">⚙️ Disponibilidad de Máquinas</div>
             <div class="data-row"><span class="label">En Uso:</span> <span class="val-uso" id="maq-uso">--</span></div>
             <div class="data-row"><span class="label">Disponible:</span> <span class="val-disp" id="maq-disp">--</span></div>
             <div class="data-row"><span class="label">En Mantenimiento:</span> <span class="val-mto" id="maq-mto">--</span></div>
@@ -149,7 +150,59 @@
                 </div>
             </div>
 
-            <div class="data-row" style="margin-top: 15px;">
+            <div class="subsection-title">🟢 Monitoreo de Oxígeno (Fila 6)</div>
+            
+            <div>
+                <div class="data-row">
+                    <span class="label">Tanque Grande 1 (9 m³):</span> 
+                    <span class="value" id="txt-ox-g1">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-ox-g1" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="data-row">
+                    <span class="label">Tanque Grande 2 (9 m³):</span> 
+                    <span class="value" id="txt-ox-g2">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-ox-g2" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="data-row">
+                    <span class="label">Tanque Pequeño 1 (1 m³):</span> 
+                    <span class="value" id="txt-ox-peq1">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-ox-peq1" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="data-row">
+                    <span class="label">Tanque Pequeño 2 (1 m³):</span> 
+                    <span class="value" id="txt-ox-peq2">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-ox-peq2" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="data-row">
+                    <span class="label">Tanque Pequeño 3 (1 m³):</span> 
+                    <span class="value" id="txt-ox-peq3">--</span>
+                </div>
+                <div class="progress-container">
+                    <div id="bar-ox-peq3" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <div class="data-row" style="margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 8px;">
                 <span class="label">Prox.Limpieza Exhaustiva:</span> 
                 <span class="value" id="limpieza">--</span>
             </div>
@@ -209,52 +262,40 @@
                 filas.push(filaActual);
             }
 
-            let filaDatos = null;
+            // Mapeo dinámico de filas por su número real en Excel
+            // El array 'filas' inicia en el índice 0 (Fila 1 de Excel)
+            let filaDatos3 = filas[2]; // Fila 3 de Excel (Datos principales)
+            let filaDatos6 = filas[5]; // Fila 6 de Excel (Datos Oxígeno)
 
-            for (let i = 0; i < filas.length; i++) {
-                const valorPH = filas[i][0];
-                const esNumeroValido = /^\d+(\.\d+)?$/.test(valorPH);
-                if (valorPH && esNumeroValido) {
-                    filaDatos = filas[i];
-                    break;
-                }
-            }
-
-            if (!filaDatos && filas.length > 0) {
-                filaDatos = filas[filas.length - 1];
-            }
-
-            if (!filaDatos || filaDatos.length < 5) {
-                document.getElementById('sync-time').innerText = "Error: Estructura de datos no encontrada.";
+            if (!filaDatos3) {
+                document.getElementById('sync-time').innerText = "Error: Fila 3 no encontrada.";
                 return;
             }
 
-            // --- INYECCIÓN DE DATOS EN PANTALLA ---
-            document.getElementById('ph').innerText              = filaDatos[0] || '--';  
-            document.getElementById('tds').innerText             = filaDatos[1] || '--';  
-            document.getElementById('dureza').innerText          = filaDatos[2] || '--';  
-            document.getElementById('cloro').innerText           = filaDatos[3] || '--';  
-            document.getElementById('ntu').innerText             = filaDatos[4] || '--';  
-            document.getElementById('salmuera').innerText         = filaDatos[5] ? filaDatos[5] + " Kilos" : '--'; 
-            document.getElementById('ult-desinf').innerText       = filaDatos[6] || '--';  
-            document.getElementById('prox-desinf').innerText      = filaDatos[7] || '--';  
-            document.getElementById('microbiologico').innerText  = filaDatos[8] || '--';  
-            document.getElementById('fisicoquimico').innerText   = filaDatos[9] || '--';  
+            // --- INYECCIÓN DE DATOS DESDE FILA 3 ---
+            document.getElementById('ph').innerText              = filaDatos3[0] || '--';  
+            document.getElementById('tds').innerText             = filaDatos3[1] || '--';  
+            document.getElementById('dureza').innerText          = filaDatos3[2] || '--';  
+            document.getElementById('cloro').innerText           = filaDatos3[3] || '--';  
+            document.getElementById('ntu').innerText             = filaDatos3[4] || '--';  
+            document.getElementById('salmuera').innerText         = filaDatos3[5] ? filaDatos3[5] + " Kilos" : '--'; 
+            document.getElementById('ult-desinf').innerText       = filaDatos3[6] || '--';  
+            document.getElementById('prox-desinf').innerText      = filaDatos3[7] || '--';  
+            document.getElementById('microbiologico').innerText  = filaDatos3[8] || '--';  
+            document.getElementById('fisicoquimico').innerText   = filaDatos3[9] || '--';  
             
-            // Sección Gestión Operativa
-            document.getElementById('cateter').innerText         = filaDatos[10] || '--'; 
-            document.getElementById('fistula').innerText         = filaDatos[11] || '--'; 
-            document.getElementById('pacientes').innerText       = filaDatos[12] || '--';
+            document.getElementById('cateter').innerText         = filaDatos3[10] || '--'; 
+            document.getElementById('fistula').innerText         = filaDatos3[11] || '--'; 
+            document.getElementById('pacientes').innerText       = filaDatos3[12] || '--';
 
-            // --- INYECCIÓN DE DATOS DE MAQUINAS (COLUMNAS T, U, V -> ÍNDICES 19, 20, 21) ---
-            document.getElementById('maq-uso').innerText         = filaDatos[19] || '0';
-            document.getElementById('maq-disp').innerText        = filaDatos[20] || '0';
-            document.getElementById('maq-mto').innerText         = filaDatos[21] || '0';
+            // Datos biomédicos desde columnas T, U, V de fila 3
+            document.getElementById('maq-uso').innerText         = filaDatos3[19] || '0';
+            document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
+            document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
-            // --- 1. PROCESAMIENTO DE PACIENTES PROGRAMADOS (COLUMNA S -> ÍNDICE 18) ---
+            // --- PACIENTES PROGRAMADOS ---
             const contenedorProgramados = document.getElementById('pacientes-programados');
-            const textoProgramados = filaDatos[18]; 
-
+            const textoProgramados = filaDatos3[18]; 
             if (textoProgramados && textoProgramados.trim() !== "" && textoProgramados !== '--') {
                 const listaProg = textoProgramados.split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 if(listaProg.length > 0) {
@@ -271,14 +312,13 @@
                 contenedorProgramados.innerHTML = "<li>No hay pacientes programados</li>";
             }
 
-            // --- 2. PROCESAMIENTO DE PACIENTES EN ESPERA (COLUMNA R -> ÍNDICE 17) ---
+            // --- PACIENTES EN ESPERA ---
             const contenedorEspera = document.getElementById('pacientes-espera');
-            const textoNombres = filaDatos[17];
+            const textoNombres = filaDatos3[17];
             const tarjetaRecepcion = contenedorEspera.closest('.card');
 
             if (textoNombres && textoNombres.trim() !== "" && textoNombres !== '--') {
                 const listaNombres = textoNombres.split('\n').map(n => n.trim()).filter(n => n.length > 0);
-                
                 if(listaNombres.length > 0) {
                     contenedorEspera.innerHTML = ""; 
                     listaNombres.forEach(nombre => {
@@ -286,11 +326,8 @@
                         li.innerText = nombre;
                         contenedorEspera.appendChild(li);
                     });
-
-                    // Alerta Visual de Espera Activa
                     tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
                     tarjetaRecepcion.style.border = '2px solid #ffc107';
-                    
                     ejecutarSonidoAlerta();
                 } else {
                     contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
@@ -303,13 +340,12 @@
                 tarjetaRecepcion.style.border = 'none';
             }
 
-            // Mantenimientos
-            document.getElementById('limpieza').innerText        = filaDatos[15] || '--';
-            document.getElementById('fumigacion').innerText      = filaDatos[16] || '--';
+            document.getElementById('limpieza').innerText        = filaDatos3[15] || '--';
+            document.getElementById('fumigacion').innerText      = filaDatos3[16] || '--';
 
-            // --- PROCESAMIENTO MATEMÁTICO DE SUMINISTROS (ACTUAL/CAPACIDAD) ---
-            let combNum = parseFloat(filaDatos[13]) || 0;
-            let aguaNum = parseFloat(filaDatos[14]) || 0;
+            // Suministros principales
+            let combNum = parseFloat(filaDatos3[13]) || 0;
+            let aguaNum = parseFloat(filaDatos3[14]) || 0;
             
             const CAPACIDAD_MAX_COMBUSTIBLE = 250; 
             const CAPACIDAD_MAX_AGUA = 33.5;         
@@ -317,13 +353,9 @@
             document.getElementById('txt-combustible').innerText = `${combNum}/${CAPACIDAD_MAX_COMBUSTIBLE} Gals`;
             document.getElementById('txt-agua').innerText        = `${aguaNum}/${CAPACIDAD_MAX_AGUA} Mts³`;
 
-            let porcCombustible = (combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100; 
-            let porcAgua = (aguaNum / CAPACIDAD_MAX_AGUA) * 100; 
+            let pCombLimpio = Math.min(Math.max((combNum / CAPACIDAD_MAX_COMBUSTIBLE) * 100, 0), 100);
+            let pAguaLimpio = Math.min(Math.max((aguaNum / CAPACIDAD_MAX_AGUA) * 100, 0), 100);
 
-            let pCombLimpio = Math.min(Math.max(porcCombustible, 0), 100);
-            let pAguaLimpio = Math.min(Math.max(porcAgua, 0), 100);
-
-            // Renderizado en las barras de progreso GRANDES
             const barComb = document.getElementById('bar-combustible');
             barComb.style.width = pCombLimpio + "%";
             barComb.innerText = `${Math.round(pCombLimpio)}%`;
@@ -331,6 +363,58 @@
             const barAgua = document.getElementById('bar-agua');
             barAgua.style.width = pAguaLimpio + "%";
             barAgua.innerText = `${Math.round(pAguaLimpio)}%`;
+
+
+            // --- 🟢 PROCESAMIENTO MATEMÁTICO EXTRAÍDO DESDE LA FILA 6 ---
+            let oxG1Num   = 0;
+            let oxG2Num   = 0;
+            let oxPeq1Num = 0;
+            let oxPeq2Num = 0;
+            let oxPeq3Num = 0;
+
+            if (filaDatos6) {
+                oxG1Num   = parseFloat(filaDatos6[13]) || 0; // Columna N
+                oxG2Num   = parseFloat(filaDatos6[14]) || 0; // Columna O
+                oxPeq1Num = parseFloat(filaDatos6[15]) || 0; // Columna P
+                oxPeq2Num = parseFloat(filaDatos6[16]) || 0; // Columna Q
+                oxPeq3Num = parseFloat(filaDatos6[17]) || 0; // Columna R
+            }
+
+            const MAX_GRANDE = 9; 
+            const MAX_PEQ    = 1;  
+
+            document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_GRANDE} m³`;
+            document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_GRANDE} m³`;
+            document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PEQ} m³`;
+            document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PEQ} m³`;
+            document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PEQ} m³`;
+
+            let pOxG1   = Math.min(Math.max((oxG1Num / MAX_GRANDE) * 100, 0), 100);
+            let pOxG2   = Math.min(Math.max((oxG2Num / MAX_GRANDE) * 100, 0), 100);
+            let pOxPeq1 = Math.min(Math.max((oxPeq1Num / MAX_PEQ) * 100, 0), 100);
+            let pOxPeq2 = Math.min(Math.max((oxPeq2Num / MAX_PEQ) * 100, 0), 100);
+            let pOxPeq3 = Math.min(Math.max((oxPeq3Num / MAX_PEQ) * 100, 0), 100);
+
+            const barG1 = document.getElementById('bar-ox-g1');
+            barG1.style.width = pOxG1 + "%";
+            barG1.innerText = `${Math.round(pOxG1)}%`;
+
+            const barG2 = document.getElementById('bar-ox-g2');
+            barG2.style.width = pOxG2 + "%";
+            barG2.innerText = `${Math.round(pOxG2)}%`;
+
+            const barPeq1 = document.getElementById('bar-ox-peq1');
+            barPeq1.style.width = pOxPeq1 + "%";
+            barPeq1.innerText = `${Math.round(pOxPeq1)}%`;
+
+            const barPeq2 = document.getElementById('bar-ox-peq2');
+            barPeq2.style.width = pOxPeq2 + "%";
+            barPeq2.innerText = `${Math.round(pOxPeq2)}%`;
+
+            const barPeq3 = document.getElementById('bar-ox-peq3');
+            barPeq3.style.width = pOxPeq3 + "%";
+            barPeq3.innerText = `${Math.round(pOxPeq3)}%`;
+
 
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
@@ -345,18 +429,12 @@
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
-            
-            if (!window.miAudioCtx) {
-                window.miAudioCtx = new AudioContext();
-            }
+            if (!window.miAudioCtx) window.miAudioCtx = new AudioContext();
             const audioCtx = window.miAudioCtx;
             if (audioCtx.state === 'suspended') return;
-            
             emitirTono(audioCtx, 587.33, 0.15, 0); 
             emitirTono(audioCtx, 698.46, 0.15, 0.2); 
-        } catch (e) {
-            console.log("Audio en espera de interacción.");
-        }
+        } catch (e) {}
     }
 
     function emitirTono(ctx, frecuencia, duracion, retraso) {
