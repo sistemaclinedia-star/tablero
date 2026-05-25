@@ -7,16 +7,61 @@
     <meta http-equiv="Expires" content="0">
     <title>Dashboard Clinedia (Conectado en Vivo)</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 20px; }
-        .header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; border-radius: 8px; position: relative; }
-        .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        /* Ajuste global para obligar a que todo quepa en una sola pantalla */
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f7f6; 
+            overflow: hidden; /* Elimina las barras de desplazamiento */
+        }
         
-        .section-title { color: #7f8c8d; font-size: 0.85em; font-weight: bold; margin: 18px 0 6px 0; letter-spacing: 0.8px; }
-        .subsection-title { color: #34495e; font-size: 0.8em; font-weight: bold; margin: 12px 0 6px 0; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            padding: 10px; 
+        }
+
+        .header { 
+            background-color: #2c3e50; 
+            color: white; 
+            padding: 8px 15px; 
+            text-align: center; 
+            border-radius: 6px; 
+            flex-shrink: 0; /* Evita que el encabezado se encoja */
+            margin-bottom: 10px;
+        }
+        .header h1 { margin: 0; font-size: 1.6rem; }
+        .header p { margin: 2px 0; font-size: 0.9rem; }
+
+        /* Contenedor flexible de 3 columnas que se estira al alto de tu monitor */
+        .container { 
+            display: flex;
+            gap: 12px; 
+            flex: 1; 
+            min-height: 0; /* Crucial para permitir que los hijos hereden el alto maximo */
+        }
+
+        .card { 
+            background: white; 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; 
+            overflow: hidden;
+        }
         
-        .data-row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #f9f9f9; align-items: center; padding-bottom: 4px; }
+        h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 0; margin-bottom: 8px; font-size: 1.2rem; }
+        
+        .section-title { color: #7f8c8d; font-size: 0.75em; font-weight: bold; margin: 8px 0 4px 0; letter-spacing: 0.8px; }
+        .subsection-title { color: #34495e; font-size: 0.75em; font-weight: bold; margin: 6px 0 4px 0; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 2px; }
+        
+        .data-row { display: flex; justify-content: space-between; margin: 4px 0; border-bottom: 1px solid #f9f9f9; align-items: center; padding-bottom: 2px; font-size: 0.88rem; }
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
         
@@ -26,35 +71,36 @@
         
         .lista-pacientes { 
             width: 100%; 
-            margin: 5px 0 12px 0; 
-            padding-left: 20px; 
+            margin: 2px 0 6px 0; 
+            padding-left: 18px; 
             color: #222; 
             font-weight: bold; 
-            font-size: 0.95em;
-            line-height: 1.5;
+            font-size: 0.85em;
+            line-height: 1.3;
         }
-        .lista-pacientes li { margin-bottom: 4px; }
-        .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
+
+        .alert { color: #e67e22; font-weight: bold; margin-top: auto; border-top: 1px dashed #eee; padding-top: 6px; font-size: 0.85rem; }
         
-        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 6px; margin-top: 6px; margin-bottom: 16px; overflow: hidden; }
+        /* Contenedores de barras más compactos para ahorrar espacio vertical */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; margin-top: 2px; margin-bottom: 6px; overflow: hidden; }
         .progress-bar { 
-            height: 45px; 
-            border-radius: 6px; 
+            height: 24px; /* Más delgada para encajar perfectamente */
+            border-radius: 4px; 
             width: 0%; 
             transition: width 0.5s ease-in-out; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             color: white; 
-            font-size: 24px; 
+            font-size: 14px; 
             font-weight: bold;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
         }
         .bg-combustible { background-color: #e67e22; }
         .bg-agua { background-color: #3498db; }
         .bg-oxigeno { background-color: #2ecc71; }
         
-        .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
+        .status-sync { font-size: 0.8em; color: #a2b4c6; margin-top: 2px; }
         .timer-badge { font-weight: bold; color: #f1c40f; }
     </style>
 </head>
@@ -65,7 +111,7 @@
         <p>Estado del Sistema Sincronizado</p>
         <div class="status-sync">
             <span id="sync-time">Buscando datos del Excel...</span> 
-            | <span class="timer-badge">Próxima actualización en: <span id="countdown">30</span>s</span>
+            | <span class="timer-badge">Actualización en: <span id="countdown">30</span>s</span>
         </div>
     </div>
 
@@ -79,20 +125,20 @@
             <div class="data-row"><span class="label">Turbidez (NTU):</span> <span class="value" id="ntu">--</span></div>
             <div class="data-row"><span class="label">Sal Actual en Salmuera:</span> <span class="value" id="salmuera">--</span></div>
             
-            <div class="data-row" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 8px;"><span class="label">Prox.Análisis Microbiológico:</span> <span class="value" id="microbiologico">--</span></div>
-            <div class="data-row"><span class="label">Prox.Análisis Físico-Químico:</span> <span class="value" id="fisicoquimico">--</span></div>
+            <div class="data-row" style="margin-top: 5px; border-top: 1px solid #ddd; padding-top: 5px;"><span class="label">Prox.Análisis Microbio:</span> <span class="value" id="microbiologico">--</span></div>
+            <div class="data-row"><span class="label">Prox.Análisis Fís-Quim:</span> <span class="value" id="fisicoquimico">--</span></div>
             
             <div class="alert">
                 <div>📅 Ult. Desinf. Reservorio: <span id="ult-desinf">--</span></div>
-                <div style="margin-top: 5px;">⚠️ Próx. Desinf. Reservorio: <span id="prox-desinf">--</span></div>
+                <div style="margin-top: 2px;">⚠️ Próx. Desinf. Reservorio: <span id="prox-desinf">--</span></div>
             </div>
         </div>
 
         <div class="card">
             <h2>📦 Gestión Operativa</h2>
             <div class="section-title">📦 ALMACÉN</div>
-            <div class="data-row"><span class="label">Kit de Catéter Disponible:</span> <span class="value" id="cateter">--</span></div>
-            <div class="data-row"><span class="label">Kit de Fístula Disponible:</span> <span class="value" id="fistula">--</span></div>
+            <div class="data-row"><span class="label">Kit de Catéter Disp:</span> <span class="value" id="cateter">--</span></div>
+            <div class="data-row"><span class="label">Kit de Fístula Disp:</span> <span class="value" id="fistula">--</span></div>
             
             <div class="section-title">🏥 SALA DE HEMODIÁLISIS</div>
             <div class="data-row"><span class="label">Pacientes en Sala:</span> <span class="value" id="pacientes">--</span></div>
@@ -103,55 +149,55 @@
             <div class="data-row"><span class="label">En Mantenimiento:</span> <span class="val-mto" id="maq-mto">--</span></div>
 
             <div class="section-title">🪑 RECEPCIÓN</div>
-            <div class="label" style="margin-bottom: 5px; color: #2980b9;">Pacientes Programados en el Día:</div>
+            <div class="label" style="font-size:0.8rem; color: #2980b9; font-weight:bold;">Programados del Día:</div>
             <ul class="lista-pacientes" id="pacientes-programados"><li>--</li></ul>
             
-            <div class="label" style="margin-bottom: 5px; color: #27ae60;">Pacientes en Recepcion:</div>
+            <div class="label" style="font-size:0.8rem; color: #27ae60; font-weight:bold;">En Recepción:</div>
             <ul class="lista-pacientes" id="pacientes-espera"><li>--</li></ul>
         </div>
 
-        <div class="card">
+        <div class="card" style="overflow-y: auto;">
             <h2>🛠️ Suministros y Mtto.</h2>
             
             <div>
                 <div class="data-row"><span class="label">Combustible Planta:</span> <span class="value" id="txt-combustible">--</span></div>
-                <div class="progress-container"><div id="bar-combustible" class="progress-bar bg-combustible" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-combustible" class="progress-bar bg-combustible">0%</div></div>
             </div>
 
             <div>
                 <div class="data-row"><span class="label">Cant. Agua Cisternas:</span> <span class="value" id="txt-agua">--</span></div>
-                <div class="progress-container"><div id="bar-agua" class="progress-bar bg-agua" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-agua" class="progress-bar bg-agua">0%</div></div>
             </div>
 
             <div class="subsection-title">🟢 Monitoreo de Oxígeno</div>
             
             <div>
                 <div class="data-row"><span class="label">Tanque Grande 1 (9 m³):</span> <span class="value" id="txt-ox-g1">--</span></div>
-                <div class="progress-container"><div id="bar-ox-g1" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-ox-g1" class="progress-bar bg-oxigeno">0%</div></div>
             </div>
 
             <div>
                 <div class="data-row"><span class="label">Tanque Grande 2 (9 m³):</span> <span class="value" id="txt-ox-g2">--</span></div>
-                <div class="progress-container"><div id="bar-ox-g2" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-ox-g2" class="progress-bar bg-oxigeno">0%</div></div>
             </div>
 
             <div>
                 <div class="data-row"><span class="label">Tanque Pequeño 1 (1 m³):</span> <span class="value" id="txt-ox-peq1">--</span></div>
-                <div class="progress-container"><div id="bar-ox-peq1" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-ox-peq1" class="progress-bar bg-oxigeno">0%</div></div>
             </div>
 
             <div>
                 <div class="data-row"><span class="label">Tanque Pequeño 2 (1 m³):</span> <span class="value" id="txt-ox-peq2">--</span></div>
-                <div class="progress-container"><div id="bar-ox-peq2" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-ox-peq2" class="progress-bar bg-oxigeno">0%</div></div>
             </div>
 
             <div>
                 <div class="data-row"><span class="label">Tanque Pequeño 3 (1 m³):</span> <span class="value" id="txt-ox-peq3">--</span></div>
-                <div class="progress-container"><div id="bar-ox-peq3" class="progress-bar bg-oxigeno" style="width: 0%;">0%</div></div>
+                <div class="progress-container"><div id="bar-ox-peq3" class="progress-bar bg-oxigeno">0%</div></div>
             </div>
 
-            <div class="data-row" style="margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 8px;"><span class="label">Prox.Limpieza Exhaustiva:</span> <span class="value" id="limpieza">--</span></div>
-            <div class="data-row"><span class="label">Prox.Fumigación Instalación:</span> <span class="value" id="fumigacion">--</span></div>
+            <div class="data-row" style="margin-top: 5px; border-top: 1px dashed #ddd; padding-top: 4px;"><span class="label">Prox.Limpieza:</span> <span class="value" id="limpieza">--</span></div>
+            <div class="data-row"><span class="label">Prox.Fumigación:</span> <span class="value" id="fumigacion">--</span></div>
         </div>
     </div>
 
@@ -163,7 +209,7 @@
     async function actualizarDashboard() {
         try {
             const respuesta = await fetch(`${URL_GOOGLE_SHEET}&_=${new Date().getTime()}`);
-            if (!respuesta.ok) throw new Error("No se pudo conectar con el Excel.");
+            if (!respuesta.ok) throw new Error("Error al conectar con Google Sheets.");
             
             const textoCSV = await respuesta.text();
             const filas = [];
@@ -176,39 +222,30 @@
                 let siguienteChar = textoCSV[i+1];
 
                 if (char === '"') {
-                    if (dentroDeComillas && siguienteChar === '"') {
-                        campoActual += '"';
-                        i++;
-                    } else {
-                        dentroDeComillas = !dentroDeComillas;
-                    }
+                    if (dentroDeComillas && siguienteChar === '"') { campoActual += '"'; i++; } 
+                    else { dentroDeComillas = !dentroDeComillas; }
                 } else if (char === ',' && !dentroDeComillas) {
                     filaActual.push(campoActual.trim());
                     campoActual = '';
                 } else if ((char === '\r' || char === '\n') && !dentroDeComillas) {
                     if (char === '\r' && siguienteChar === '\n') { i++; }
                     filaActual.push(campoActual.trim());
-                    if (filaActual.some(c => c.length > 0) || filaActual.length > 0) {
-                        filas.push(filaActual);
-                    }
+                    if (filaActual.length > 0) filas.push(filaActual);
                     filaActual = [];
                     campoActual = '';
                 } else {
                     campoActual += char;
                 }
             }
-            if (campoActual || filaActual.length > 0) {
-                filaActual.push(campoActual.trim());
-                filas.push(filaActual);
-            }
+            if (campoActual || filaActual.length > 0) { filaActual.push(campoActual.trim()); filas.push(filaActual); }
 
-            // Lectura fija y directa basada exactamente en tu estructura de Google Sheets
-            let filaDatos3 = filas[2]; // Fila de datos general
-            let filaDatos6 = filas[5]; // Fila de datos de Oxígeno (Fila 6)
+            // Mapeo directo y seguro de las filas
+            let filaDatos3 = filas[2]; 
+            let filaDatos6 = filas[5]; 
 
             if (!filaDatos3) return;
 
-            // --- INYECCIÓN CARD 1 ---
+            // --- INYECCIÓN DE TEXTOS CARD 1 Y CARD 2 ---
             document.getElementById('ph').innerText              = filaDatos3[0] || '--';  
             document.getElementById('tds').innerText             = filaDatos3[1] || '--';  
             document.getElementById('dureza').innerText          = filaDatos3[2] || '--';  
@@ -220,7 +257,6 @@
             document.getElementById('microbiologico').innerText  = filaDatos3[8] || '--';  
             document.getElementById('fisicoquimico').innerText   = filaDatos3[9] || '--';  
             
-            // --- INYECCIÓN CARD 2 ---
             document.getElementById('cateter').innerText         = filaDatos3[10] || '--'; 
             document.getElementById('fistula').innerText         = filaDatos3[11] || '--'; 
             document.getElementById('pacientes').innerText       = filaDatos3[12] || '--';
@@ -228,35 +264,29 @@
             document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
+            // Listas de Pacientes
             const contenedorProgramados = document.getElementById('pacientes-programados');
-            const textoProgramados = filaDatos3[18]; 
-            if (textoProgramados) {
-                const listaProg = textoProgramados.split('\n').map(n => n.trim()).filter(n => n.length > 0);
-                contenedorProgramados.innerHTML = listaProg.length ? "" : "<li>No hay pacientes programados</li>";
-                listaProg.forEach(nombre => {
-                    const li = document.createElement('li'); li.innerText = nombre; contenedorProgramados.appendChild(li);
-                });
+            if (filaDatos3[18]) {
+                const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
+                contenedorProgramados.innerHTML = listaProg.length ? "" : "<li>Ninguno</li>";
+                listaProg.forEach(n => { const li = document.createElement('li'); li.innerText = n; contenedorProgramados.appendChild(li); });
             }
-
             const contenedorEspera = document.getElementById('pacientes-espera');
-            const textoNombres = filaDatos3[17];
             const tarjetaRecepcion = contenedorEspera.closest('.card');
-            if (textoNombres) {
-                const listaNombres = textoNombres.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            if (filaDatos3[17]) {
+                const listaNombres = filaDatos3[17].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 if(listaNombres.length > 0) {
                     contenedorEspera.innerHTML = ""; 
-                    listaNombres.forEach(nombre => {
-                        const li = document.createElement('li'); li.innerText = nombre; contenedorEspera.appendChild(li);
-                    });
+                    listaNombres.forEach(n => { const li = document.createElement('li'); li.innerText = n; contenedorEspera.appendChild(li); });
                     tarjetaRecepcion.style.backgroundColor = '#fff3cd'; tarjetaRecepcion.style.border = '2px solid #ffc107';
                     ejecutarSonidoAlerta();
                 } else {
-                    contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
+                    contenedorEspera.innerHTML = "<li>Ninguno</li>";
                     tarjetaRecepcion.style.backgroundColor = 'white'; tarjetaRecepcion.style.border = 'none';
                 }
             }
 
-            // --- INYECCIÓN CARD 3 (AGUA Y COMBUSTIBLE) ---
+            // --- CARD 3: AGUA Y COMBUSTIBLE ---
             document.getElementById('limpieza').innerText        = filaDatos3[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos3[16] || '--';
 
@@ -276,19 +306,19 @@
             document.getElementById('bar-agua').style.width = pAguaLimpio + "%";
             document.getElementById('bar-agua').innerText = `${Math.round(pAguaLimpio)}%`;
 
-            // --- 🟢 SECCIÓN OXÍGENO CORREGIDA (COLUMNAS EXACTAS O, P, Q, R, S) ---
-            let oxG1Num   = 0;
-            let oxG2Num   = 0;
-            let oxPeq1Num = 0;
-            let oxPeq2Num = 0;
-            let oxPeq3Num = 0;
+            // --- 🟢 SECCIÓN OXÍGENO TOTALMENTE BLINDADA CONTRA CELDAS VACÍAS ---
+            let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
 
             if (filaDatos6) {
-                oxG1Num   = parseFloat(filaDatos6[14]) || 0; // Columna O (Tanque Grande 1)
-                oxG2Num   = parseFloat(filaDatos6[15]) || 0; // Columna P (Tanque Grande 2)
-                oxPeq1Num = parseFloat(filaDatos6[16]) || 0; // Columna Q (Tanque Chico 1)
-                oxPeq2Num = parseFloat(filaDatos6[17]) || 0; // Columna R (Tanque Chico 2)
-                oxPeq3Num = parseFloat(filaDatos6[18]) || 0; // Columna S (Tanque Chico 3)
+                // Filtramos la fila dejando solo los números válidos ingresados para evitar desfaces por huecos vacíos
+                let numerosEnFila = filaDatos6.map(val => val.trim()).filter(val => val !== "" && !isNaN(val));
+                
+                // Asignamos estrictamente en orden correlativo los números encontrados
+                oxG1Num   = parseFloat(numerosEnFila[0]) || 0; // Primer número que aparezca (TG1)
+                oxG2Num   = parseFloat(numerosEnFila[1]) || 0; // Segundo número (TG2)
+                oxPeq1Num = parseFloat(numerosEnFila[2]) || 0; // Tercer número (TP1)
+                oxPeq2Num = parseFloat(numerosEnFila[3]) || 0; // Cuarto número (TP2)
+                oxPeq3Num = parseFloat(numerosEnFila[4]) || 0; // Quinto número (TP3)
             }
 
             const MAX_PSI = 2000;  
@@ -307,16 +337,12 @@
 
             document.getElementById('bar-ox-g1').style.width = pOxG1 + "%";
             document.getElementById('bar-ox-g1').innerText = `${Math.round(pOxG1)}%`;
-
             document.getElementById('bar-ox-g2').style.width = pOxG2 + "%";
             document.getElementById('bar-ox-g2').innerText = `${Math.round(pOxG2)}%`;
-
             document.getElementById('bar-ox-peq1').style.width = pOxPeq1 + "%";
             document.getElementById('bar-ox-peq1').innerText = `${Math.round(pOxPeq1)}%`;
-
             document.getElementById('bar-ox-peq2').style.width = pOxPeq2 + "%";
             document.getElementById('bar-ox-peq2').innerText = `${Math.round(pOxPeq2)}%`;
-
             document.getElementById('bar-ox-peq3').style.width = pOxPeq3 + "%";
             document.getElementById('bar-ox-peq3').innerText = `${Math.round(pOxPeq3)}%`;
 
@@ -324,7 +350,7 @@
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
 
         } catch (error) {
-            console.error("Error al procesar el tablero:", error);
+            console.error(error);
             document.getElementById('sync-time').innerText = "Error de sincronización con Google Sheets.";
         }
     }
@@ -335,8 +361,7 @@
             if (!AudioContext || !window.miAudioCtx) window.miAudioCtx = new AudioContext();
             const audioCtx = window.miAudioCtx;
             if (audioCtx.state === 'suspended') return;
-            emitirTono(audioCtx, 587.33, 0.15, 0); 
-            emitirTono(audioCtx, 698.46, 0.15, 0.2); 
+            emitirTono(audioCtx, 587.33, 0.15, 0); emitirTono(audioCtx, 698.46, 0.15, 0.2); 
         } catch (e) {}
     }
 
