@@ -163,7 +163,7 @@
     const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
 
-    // 👇 AGREGA AQUÍ TU ENLACE LARGO DE LA VERSIÓN 2 DE GOOGLE APPS SCRIPT 👇
+    // 👇 REVISE QUE ESTA URL SEA TU ENLACE ACTUAL DE GOOGLE APPS SCRIPT 👇
     const URL_ENVIAR_DATOS = 'https://script.google.com/macros/s/AKfycbzElxtqfTuG4NwFF6gpCUoXfuIuSzMFC9IOkiU3yw_pCiobyVEObnH1atYgtLLLuaX9mA/exec'; 
                     
     async function actualizarDashboard() {
@@ -199,8 +199,7 @@
             }
             if (campoActual || filaActual.length > 0) { filaActual.push(campoActual.trim()); filas.push(filaActual); }
 
-            let filaDatos3 = filas[2]; 
-            let filaDatos6 = filas[5]; 
+            let filaDatos3 = filas[2]; // Corresponde a la fila 3 del Excel real
 
             if (!filaDatos3) return;
 
@@ -226,9 +225,10 @@
             if (contenedorProgramados && filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 
+                // CORRECCIÓN DE COORDENADA: Buscamos la lista de marcados en la Fila 4 (filas[3])
                 let listaMarcadosCentral = [];
-                if (filas[5] && filas[5][18]) {
-                    listaMarcadosCentral = filas[5][18].split('\n').map(n => n.trim());
+                if (filas[3] && filas[3][18]) {
+                    listaMarcadosCentral = filas[3][18].split('\n').map(n => n.trim());
                 }
 
                 contenedorProgramados.innerHTML = listaProg.length ? "" : "<li>No hay pacientes programados</li>";
@@ -289,7 +289,6 @@
                 });
             }
 
-            // CONTROL ANTIBLOQUEO: Cambia el fondo de la tarjeta de gestión si hay pacientes en espera
             const contenedorEspera = document.getElementById('pacientes-espera');
             const tarjetaRecepcion = document.getElementById('tarjeta-gestion');
             if (contenedorEspera && filaDatos3[17]) {
@@ -330,42 +329,35 @@
             document.getElementById('bar-agua').style.width = pAguaLimpio + "%";
             document.getElementById('bar-agua').innerText = `${Math.round(pAguaLimpio)}%`;
 
-            let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
+            // LECTURA DINÁMICA DE OXÍGENO: Busca la última fila que tenga números (el bloque inferior de Suministros)
+            let filaOxigeno = filas.find(f => f.length > 5 && !isNaN(parseFloat(f[0])) && parseFloat(f[0]) > 100);
+            
+            if (filaOxigeno) {
+                let oxG1Num   = parseFloat(filaOxigeno[0]) || 0; 
+                let oxG2Num   = parseFloat(filaOxigeno[1]) || 0; 
+                let oxPeq1Num = parseFloat(filaOxigeno[2]) || 0; 
+                let oxPeq2Num = parseFloat(filaOxigeno[3]) || 0; 
+                let oxPeq3Num = parseFloat(filaOxigeno[4]) || 0; 
 
-            if (filaDatos6) {
-                let numerosEnFila = filaDatos6.map(val => val.trim()).filter(val => val !== "" && !isNaN(val));
-                
-                oxG1Num   = parseFloat(numerosEnFila[0]) || 0; 
-                oxG2Num   = parseFloat(numerosEnFila[1]) || 0; 
-                oxPeq1Num = parseFloat(numerosEnFila[2]) || 0; 
-                oxPeq2Num = parseFloat(numerosEnFila[3]) || 0; 
-                oxPeq3Num = parseFloat(numerosEnFila[4]) || 0; 
+                const MAX_PSI = 2000;  
+
+                document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_PSI} PSI`;
+                document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_PSI} PSI`;
+                document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PSI} PSI`;
+                document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PSI} PSI`;
+                document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PSI} PSI`;
+
+                document.getElementById('bar-ox-g1').style.width = Math.min((oxG1Num / MAX_PSI) * 100, 100) + "%";
+                document.getElementById('bar-ox-g1').innerText = `${Math.round(Math.min((oxG1Num / MAX_PSI) * 100, 100))}%`;
+                document.getElementById('bar-ox-g2').style.width = Math.min((oxG2Num / MAX_PSI) * 100, 100) + "%";
+                document.getElementById('bar-ox-g2').innerText = `${Math.round(Math.min((oxG2Num / MAX_PSI) * 100, 100))}%`;
+                document.getElementById('bar-ox-peq1').style.width = Math.min((oxPeq1Num / MAX_PSI) * 100, 100) + "%";
+                document.getElementById('bar-ox-peq1').innerText = `${Math.round(Math.min((oxPeq1Num / MAX_PSI) * 100, 100))}%`;
+                document.getElementById('bar-ox-peq2').style.width = Math.min((oxPeq2Num / MAX_PSI) * 100, 100) + "%";
+                document.getElementById('bar-ox-peq2').innerText = `${Math.round(Math.min((oxPeq2Num / MAX_PSI) * 100, 100))}%`;
+                document.getElementById('bar-ox-peq3').style.width = Math.min((oxPeq3Num / MAX_PSI) * 100, 100) + "%";
+                document.getElementById('bar-ox-peq3').innerText = `${Math.round(Math.min((oxPeq3Num / MAX_PSI) * 100, 100))}%`;
             }
-
-            const MAX_PSI = 2000;  
-
-            document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_PSI} PSI`;
-            document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_PSI} PSI`;
-            document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PSI} PSI`;
-            document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PSI} PSI`;
-            document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PSI} PSI`;
-
-            let pOxG1   = Math.min(Math.max((oxG1Num / MAX_PSI) * 100, 0), 100);
-            let pOxG2   = Math.min(Math.max((oxG2Num / MAX_PSI) * 100, 0), 100);
-            let pOxPeq1 = Math.min(Math.max((oxPeq1Num / MAX_PSI) * 100, 0), 100);
-            let pOxPeq2 = Math.min(Math.max((oxPeq2Num / MAX_PSI) * 100, 0), 100);
-            let pOxPeq3 = Math.min(Math.max((oxPeq3Num / MAX_PSI) * 100, 0), 100);
-
-            document.getElementById('bar-ox-g1').style.width = pOxG1 + "%";
-            document.getElementById('bar-ox-g1').innerText = `${Math.round(pOxG1)}%`;
-            document.getElementById('bar-ox-g2').style.width = pOxG2 + "%";
-            document.getElementById('bar-ox-g2').innerText = `${Math.round(pOxG2)}%`;
-            document.getElementById('bar-ox-peq1').style.width = pOxPeq1 + "%";
-            document.getElementById('bar-ox-peq1').innerText = `${Math.round(pOxPeq1)}%`;
-            document.getElementById('bar-ox-peq2').style.width = pOxPeq2 + "%";
-            document.getElementById('bar-ox-peq2').innerText = `${Math.round(pOxPeq2)}%`;
-            document.getElementById('bar-ox-peq3').style.width = pOxPeq3 + "%";
-            document.getElementById('bar-ox-peq3').innerText = `${Math.round(pOxPeq3)}%`;
 
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
