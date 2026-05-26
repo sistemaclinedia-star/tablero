@@ -91,7 +91,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="tarjeta-gestion">
             <h2>📦 Gestión Operativa</h2>
             <div class="section-title">📦 ALMACÉN</div>
             <div class="data-row"><span class="label">Kit de Catéter Disponible:</span> <span class="value" id="cateter">--</span></div>
@@ -163,8 +163,8 @@
     const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
 
-    // 👇 PEGA TU NUEVA URL AQUÍ ABAJO 👇
-    const URL_ENVIAR_DATOS = 'https://script.google.com/macros/s/AKfycbzElxtqfTuG4NwFF6gpCUoXfuIuSzMFC9IOkiU3yw_pCiobyVEObnH1atYgtLLLuaX9mA/exec'; 
+    // 👇 AGREGA AQUÍ TU ENLACE LARGO DE LA VERSIÓN 2 DE GOOGLE APPS SCRIPT 👇
+    const URL_ENVIAR_DATOS = 'https://script.google.com/macros/s/AKfycbxo2VnshM7R21f3m83Wq_oM66SihO_C2D_4f1UvEaKqKAd5-87b40974V0a9Z8X_m6S/exec'; 
                     
     async function actualizarDashboard() {
         try {
@@ -223,7 +223,7 @@
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
             const contenedorProgramados = document.getElementById('pacientes-programados');
-            if (filaDatos3[18]) {
+            if (contenedorProgramados && filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 
                 let listaMarcadosCentral = [];
@@ -265,7 +265,6 @@
 
                         checkbox.disabled = true;
 
-                        // Comunicación silenciosa no-cors para evitar bloqueos del navegador
                         fetch(URL_ENVIAR_DATOS, {
                             method: 'POST',
                             mode: 'no-cors',
@@ -273,7 +272,6 @@
                             body: JSON.stringify({ nombre: n, marcado: estaMarcado })
                         })
                         .then(() => {
-                            // Damos tiempo a Google para escribir en la celda y refrescamos
                             setTimeout(actualizarDashboard, 2500);
                         })
                         .catch((error) => {
@@ -291,18 +289,25 @@
                 });
             }
 
+            // CONTROL ANTIBLOQUEO: Cambia el fondo de la tarjeta de gestión si hay pacientes en espera
             const contenedorEspera = document.getElementById('pacientes-espera');
-            const tarjetaRecepcion = contenedorEspera.closest('.card');
-            if (filaDatos3[17]) {
+            const tarjetaRecepcion = document.getElementById('tarjeta-gestion');
+            if (contenedorEspera && filaDatos3[17]) {
                 const listaNombres = filaDatos3[17].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 if(listaNombres.length > 0) {
                     contenedorEspera.innerHTML = ""; 
                     listaNombres.forEach(n => { const li = document.createElement('li'); li.innerText = n; contenedorEspera.appendChild(li); });
-                    tarjetaRecepcion.style.backgroundColor = '#fff3cd'; tarjetaRecepcion.style.border = '2px solid #ffc107';
+                    if (tarjetaRecepcion) {
+                        tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
+                        tarjetaRecepcion.style.border = '2px solid #ffc107';
+                    }
                     ejecutarSonidoAlerta();
                 } else {
                     contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
-                    tarjetaRecepcion.style.backgroundColor = 'white'; tarjetaRecepcion.style.border = 'none';
+                    if (tarjetaRecepcion) {
+                        tarjetaRecepcion.style.backgroundColor = 'white'; 
+                        tarjetaRecepcion.style.border = 'none';
+                    }
                 }
             }
 
