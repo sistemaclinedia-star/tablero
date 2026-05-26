@@ -13,7 +13,6 @@
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease; }
         h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
         
-        /* Estilos para los Subapartados de Gestión Operativa */
         .section-title { color: #7f8c8d; font-size: 0.85em; font-weight: bold; margin: 18px 0 6px 0; letter-spacing: 0.8px; }
         .subsection-title { color: #34495e; font-size: 0.8em; font-weight: bold; margin: 12px 0 6px 0; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
         
@@ -21,12 +20,10 @@
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
         
-        /* Estilos específicos para estados de máquinas */
         .val-uso { color: #e74c3c; font-weight: bold; }
         .val-disp { color: #27ae60; font-weight: bold; }
         .val-mto { color: #f39c12; font-weight: bold; }
         
-        /* Estilo especial para las listas de pacientes */
         .lista-pacientes { 
             width: 100%; 
             margin: 5px 0 12px 0; 
@@ -41,10 +38,8 @@
 
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* Contenedor de la barra */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 6px; margin-top: 6px; margin-bottom: 16px; overflow: hidden; }
         
-        /* Barras de progreso */
         .progress-bar { 
             height: 25px; 
             border-radius: 6px; 
@@ -62,7 +57,6 @@
         .bg-agua { background-color: #3498db; }
         .bg-oxigeno { background-color: #2ecc71; }
         
-        /* Cronómetro */
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
         .timer-badge { font-weight: bold; color: #f1c40f; }
     </style>
@@ -169,8 +163,8 @@
     const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
 
-    // 👇 PEGA TU ENLACE EN MEDIO DE LAS COMILLAS SIMPLES AQUÍ ABAJO 👇
-    const URL_ENVIAR_DATOS = 'https://script.google.com/macros/s/AKfycbzElxtqfTuG4NwFF6gpCUoXfuIuSzMFC9IOkiU3yw_pCiobyVEObnH1atYgtLLLuaX9mA/exec'; 
+    // 👇 PEGA TU NUEVA URL AQUÍ ABAJO 👇
+    const URL_ENVIAR_DATOS = 'TU_URL_DE_APPS_SCRIPT_AQUÍ'; 
                     
     async function actualizarDashboard() {
         try {
@@ -210,7 +204,6 @@
 
             if (!filaDatos3) return;
 
-            // --- INYECCIÓN CARD 1 Y CARD 2 ---
             document.getElementById('ph').innerText              = filaDatos3[0] || '--';  
             document.getElementById('tds').innerText             = filaDatos3[1] || '--';  
             document.getElementById('dureza').innerText          = filaDatos3[2] || '--';  
@@ -229,12 +222,10 @@
             document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
-            // --- SECCIÓN: PACIENTES PROGRAMADOS QUE PERSISTEN EN LA LISTA ---
             const contenedorProgramados = document.getElementById('pacientes-programados');
             if (filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 
-                // Leemos los pacientes tachados desde la celda S6 (Fila 6 del Excel)
                 let listaMarcadosCentral = [];
                 if (filas[5] && filas[5][18]) {
                     listaMarcadosCentral = filas[5][18].split('\n').map(n => n.trim());
@@ -261,7 +252,7 @@
                         li.style.textDecoration = "line-through";
                     }
 
-                    checkbox.addEventListener('change', async function() {
+                    checkbox.addEventListener('change', function() {
                         const estaMarcado = this.checked;
                         
                         if (estaMarcado) {
@@ -272,23 +263,23 @@
                             li.style.textDecoration = "none";
                         }
 
-                        try {
-                            checkbox.disabled = true;
-                            
-                            await fetch(URL_ENVIAR_DATOS, {
-                                method: 'POST',
-                                mode: 'no-cors',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ nombre: n, marcado: estaMarcado })
-                            });
+                        checkbox.disabled = true;
 
-                            setTimeout(actualizarDashboard, 2000);
-
-                        } catch (error) {
-                            console.error("Error al actualizar:", error);
-                            alert("Fallo de comunicación con Google Sheets.");
+                        // Comunicación silenciosa no-cors para evitar bloqueos del navegador
+                        fetch(URL_ENVIAR_DATOS, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ nombre: n, marcado: estaMarcado })
+                        })
+                        .then(() => {
+                            // Damos tiempo a Google para escribir en la celda y refrescamos
+                            setTimeout(actualizarDashboard, 2500);
+                        })
+                        .catch((error) => {
+                            console.error("Error al enviar:", error);
                             checkbox.disabled = false;
-                        }
+                        });
                     });
 
                     const spanNombre = document.createElement('span');
@@ -315,7 +306,6 @@
                 }
             }
 
-            // --- CARD 3: AGUA Y COMBUSTIBLE ---
             document.getElementById('limpieza').innerText        = filaDatos3[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos3[16] || '--';
 
@@ -335,7 +325,6 @@
             document.getElementById('bar-agua').style.width = pAguaLimpio + "%";
             document.getElementById('bar-agua').innerText = `${Math.round(pAguaLimpio)}%`;
 
-            // --- SECCIÓN OXÍGENO ---
             let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
 
             if (filaDatos6) {
