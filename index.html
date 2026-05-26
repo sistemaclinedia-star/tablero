@@ -30,8 +30,8 @@
         .lista-pacientes { 
             width: 100%; 
             margin: 5px 0 12px 0; 
-            padding-left: 0; /* Ajustado a 0 para alinear correctamente los checkboxes */
-            list-style: none; /* Quitamos las viñetas por defecto */
+            padding-left: 0; 
+            list-style: none; 
             color: #222; 
             font-weight: bold; 
             font-size: 0.95em;
@@ -44,7 +44,7 @@
         /* Contenedor de la barra */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 6px; margin-top: 6px; margin-bottom: 16px; overflow: hidden; }
         
-        /* Barras de progreso originales y grandes */
+        /* Barras de progreso */
         .progress-bar { 
             height: 25px; 
             border-radius: 6px; 
@@ -168,6 +168,9 @@
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
+
+    // 👇 PEGA TU ENLACE EN MEDIO DE LAS COMILLAS SIMPLES AQUÍ ABAJO 👇
+    const URL_ENVIAR_DATOS = 'https://script.google.com/macros/s/AKfycbzElxtqfTuG4NwFF6gpCUoXfuIuSzMFC9IOkiU3yw_pCiobyVEObnH1atYgtLLLuaX9mA/exec'; 
                     
     async function actualizarDashboard() {
         try {
@@ -226,10 +229,17 @@
             document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
-            // --- SECCIÓN MODIFICADA: PACIENTES PROGRAMADOS CON CHECKBOX INTERACTIVO ---
+            // --- SECCIÓN: PACIENTES PROGRAMADOS QUE PERSISTEN EN LA LISTA ---
             const contenedorProgramados = document.getElementById('pacientes-programados');
             if (filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
+                
+                // Leemos los pacientes tachados desde la celda S6 (Fila 6 del Excel)
+                let listaMarcadosCentral = [];
+                if (filas[5] && filas[5][18]) {
+                    listaMarcadosCentral = filas[5][18].split('\n').map(n => n.trim());
+                }
+
                 contenedorProgramados.innerHTML = listaProg.length ? "" : "<li>No hay pacientes programados</li>";
                 
                 listaProg.forEach(n => { 
@@ -245,24 +255,39 @@
                     checkbox.style.height = '18px';
                     checkbox.style.cursor = 'pointer';
                     
-                    // Identificador único por nombre para persistencia local
-                    const storageKey = `paciente_${n.replace(/\s+/g, '_')}`;
-                    
-                    if (localStorage.getItem(storageKey) === 'true') {
+                    if (listaMarcadosCentral.includes(n)) {
                         checkbox.checked = true;
                         li.style.opacity = "0.5";
                         li.style.textDecoration = "line-through";
                     }
 
-                    checkbox.addEventListener('change', function() {
-                        if (this.checked) {
-                            localStorage.setItem(storageKey, 'true');
+                    checkbox.addEventListener('change', async function() {
+                        const estaMarcado = this.checked;
+                        
+                        if (estaMarcado) {
                             li.style.opacity = "0.5";
                             li.style.textDecoration = "line-through";
                         } else {
-                            localStorage.removeItem(storageKey);
                             li.style.opacity = "1";
                             li.style.textDecoration = "none";
+                        }
+
+                        try {
+                            checkbox.disabled = true;
+                            
+                            await fetch(URL_ENVIAR_DATOS, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ nombre: n, marcado: estaMarcado })
+                            });
+
+                            setTimeout(actualizarDashboard, 2000);
+
+                        } catch (error) {
+                            console.error("Error al actualizar:", error);
+                            alert("Fallo de comunicación con Google Sheets.");
+                            checkbox.disabled = false;
                         }
                     });
 
@@ -310,7 +335,7 @@
             document.getElementById('bar-agua').style.width = pAguaLimpio + "%";
             document.getElementById('bar-agua').innerText = `${Math.round(pAguaLimpio)}%`;
 
-            // --- 🟢 SECCIÓN OXÍGENO FILTRADA CONTRA DESFASES POR ESPACIOS EN BLANCO ---
+            // --- SECCIÓN OXÍGENO ---
             let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
 
             if (filaDatos6) {
