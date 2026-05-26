@@ -30,7 +30,8 @@
         .lista-pacientes { 
             width: 100%; 
             margin: 5px 0 12px 0; 
-            padding-left: 20px; 
+            padding-left: 0; /* Ajustado a 0 para alinear correctamente los checkboxes */
+            list-style: none; /* Quitamos las viñetas por defecto */
             color: #222; 
             font-weight: bold; 
             font-size: 0.95em;
@@ -115,7 +116,7 @@
             <ul class="lista-pacientes" id="pacientes-programados"><li>--</li></ul>
             
             <div class="label" style="margin-bottom: 5px; color: #27ae60;">Pacientes en Recepcion:</div>
-            <ul class="lista-pacientes" id="pacientes-espera"><li>--</li></ul>
+            <ul class="lista-pacientes" id="pacientes-espera" style="padding-left: 20px; list-style: disc;"><li>--</li></ul>
         </div>
 
         <div class="card">
@@ -225,12 +226,55 @@
             document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
+            // --- SECCIÓN MODIFICADA: PACIENTES PROGRAMADOS CON CHECKBOX INTERACTIVO ---
             const contenedorProgramados = document.getElementById('pacientes-programados');
             if (filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 contenedorProgramados.innerHTML = listaProg.length ? "" : "<li>No hay pacientes programados</li>";
-                listaProg.forEach(n => { const li = document.createElement('li'); li.innerText = n; contenedorProgramados.appendChild(li); });
+                
+                listaProg.forEach(n => { 
+                    const li = document.createElement('li');
+                    li.style.display = "flex";
+                    li.style.alignItems = "center";
+                    li.style.gap = "10px";
+                    li.style.marginBottom = "6px";
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.style.width = '18px';
+                    checkbox.style.height = '18px';
+                    checkbox.style.cursor = 'pointer';
+                    
+                    // Identificador único por nombre para persistencia local
+                    const storageKey = `paciente_${n.replace(/\s+/g, '_')}`;
+                    
+                    if (localStorage.getItem(storageKey) === 'true') {
+                        checkbox.checked = true;
+                        li.style.opacity = "0.5";
+                        li.style.textDecoration = "line-through";
+                    }
+
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            localStorage.setItem(storageKey, 'true');
+                            li.style.opacity = "0.5";
+                            li.style.textDecoration = "line-through";
+                        } else {
+                            localStorage.removeItem(storageKey);
+                            li.style.opacity = "1";
+                            li.style.textDecoration = "none";
+                        }
+                    });
+
+                    const spanNombre = document.createElement('span');
+                    spanNombre.innerText = n;
+
+                    li.appendChild(checkbox);
+                    li.appendChild(spanNombre);
+                    contenedorProgramados.appendChild(li); 
+                });
             }
+
             const contenedorEspera = document.getElementById('pacientes-espera');
             const tarjetaRecepcion = contenedorEspera.closest('.card');
             if (filaDatos3[17]) {
@@ -270,10 +314,8 @@
             let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
 
             if (filaDatos6) {
-                // Filtramos la fila extrayendo únicamente los valores numéricos ingresados
                 let numerosEnFila = filaDatos6.map(val => val.trim()).filter(val => val !== "" && !isNaN(val));
                 
-                // Mapeo ordenado secuencial
                 oxG1Num   = parseFloat(numerosEnFila[0]) || 0; 
                 oxG2Num   = parseFloat(numerosEnFila[1]) || 0; 
                 oxPeq1Num = parseFloat(numerosEnFila[2]) || 0; 
