@@ -64,6 +64,11 @@
         /* Cronómetro */
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
         .timer-badge { font-weight: bold; color: #f1c40f; }
+
+        /* Estilos para la nueva tabla de catéteres */
+        .tabla-cateteres { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85em; }
+        .tabla-cateteres th { background-color: #e8f4f8; color: #2980b9; text-align: left; padding: 6px; border-bottom: 2px solid #cbd5e1; }
+        .tabla-cateteres td { padding: 6px; border-bottom: 1px solid #e2e8f0; color: #334155; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -94,6 +99,30 @@
                 <div>📅 Ult. Desinf. Reservorio: <span id="ult-desinf">--</span></div>
                 <div style="margin-top: 5px;">⚠️ Próx. Desinf. Reservorio: <span id="prox-desinf">--</span></div>
             </div>
+
+            <div class="section-title" style="margin-top: 25px; color: #2c3e50; font-size: 0.95em; border-top: 2px solid #2980b9; padding-top: 12px;">
+                🩺 COLOCACIÓN DE CATÉTERES
+            </div>
+            <div style="font-size: 0.85em; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">
+                Médico: <span style="color: #e74c3c;">Dr. Moisés Barrientos Llanes</span>
+            </div>
+            <div style="font-size: 0.8em; background-color: #f8fafc; padding: 4px 8px; border-left: 3px solid #64748b; font-weight: bold; color: #475569; margin-bottom: 8px;">
+                ÁREA: PROCEDIMIENTO
+            </div>
+            
+            <table class="tabla-cateteres">
+                <thead>
+                    <tr>
+                        <th>PACIENTE INTERVENIDO</th>
+                        <th style="text-align: right;">TIPO DE CATÉTER</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-pacientes-cateter">
+                    <tr>
+                        <td colspan="2" style="text-align: center; color: #94a3b8;">Cargando información...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <div class="card">
@@ -225,6 +254,33 @@
             document.getElementById('maq-disp').innerText        = filaDatos3[20] || '0';
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
+            // --- PROCESAMIENTO DINÁMICO DE COLOCACIÓN DE CATÉTERES ---
+            const tablaCateterBody = document.getElementById('tabla-pacientes-cateter');
+            tablaCateterBody.innerHTML = ""; // Limpiar estado anterior
+            
+            let totalCateteresEncontrados = 0;
+            // Recorremos las filas desde el índice 5 en adelante buscando registros de pacientes en columnas F, G, H
+            for(let i = 5; i < filas.length; i++) {
+                let filaIterada = filas[i];
+                if(filaIterada && filaIterada[5]) { // Si hay un nombre de paciente en la Columna F
+                    let nombrePaciente = filaIterada[5].trim();
+                    let esMahukar = filaIterada[6] ? filaIterada[6].trim().toUpperCase() : "";
+                    let esPalindrome = filaIterada[7] ? filaIterada[7].trim().toUpperCase() : "";
+                    
+                    let tipoCateter = "No especificado";
+                    if(esMahukar === "OK") tipoCateter = "MAHUKAR";
+                    else if(esPalindrome === "OK") tipoCateter = "PALINDROME";
+                    
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${nombrePaciente}</td><td style="text-align: right; font-weight: bold; color: #2980b9;">${tipoCateter}</td>`;
+                    tablaCateterBody.appendChild(tr);
+                    totalCateteresEncontrados++;
+                }
+            }
+            if(totalCateteresEncontrados === 0) {
+                tablaCateterBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #94a3b8; font-style: italic;">No hay procedimientos el día de hoy</td></tr>`;
+            }
+
             const contenedorProgramados = document.getElementById('pacientes-programados');
             if (filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
@@ -270,10 +326,8 @@
             let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
 
             if (filaDatos6) {
-                // Filtramos la fila extrayendo únicamente los valores numéricos ingresados
                 let numerosEnFila = filaDatos6.map(val => val.trim()).filter(val => val !== "" && !isNaN(val));
                 
-                // Mapeo ordenado secuencial
                 oxG1Num   = parseFloat(numerosEnFila[0]) || 0; 
                 oxG2Num   = parseFloat(numerosEnFila[1]) || 0; 
                 oxPeq1Num = parseFloat(numerosEnFila[2]) || 0; 
