@@ -13,6 +13,7 @@
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease; }
         h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
         
+        /* Estilos para los Subapartados de Gestión Operativa */
         .section-title { color: #7f8c8d; font-size: 0.85em; font-weight: bold; margin: 18px 0 6px 0; letter-spacing: 0.8px; }
         .subsection-title { color: #34495e; font-size: 0.8em; font-weight: bold; margin: 12px 0 6px 0; letter-spacing: 0.5px; border-bottom: 1px dashed #ddd; padding-bottom: 3px; }
         
@@ -20,15 +21,16 @@
         .label { font-weight: bold; color: #555; }
         .value { color: #222; font-weight: bold; }
         
+        /* Estilos específicos para estados de máquinas */
         .val-uso { color: #e74c3c; font-weight: bold; }
         .val-disp { color: #27ae60; font-weight: bold; }
         .val-mto { color: #f39c12; font-weight: bold; }
         
+        /* Estilo especial para las listas de pacientes */
         .lista-pacientes { 
             width: 100%; 
             margin: 5px 0 12px 0; 
-            padding-left: 0; 
-            list-style: none; 
+            padding-left: 20px; 
             color: #222; 
             font-weight: bold; 
             font-size: 0.95em;
@@ -38,8 +40,10 @@
 
         .alert { color: #e67e22; font-weight: bold; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
+        /* Contenedor de la barra */
         .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 6px; margin-top: 6px; margin-bottom: 16px; overflow: hidden; }
         
+        /* Barras de progreso originales y grandes */
         .progress-bar { 
             height: 25px; 
             border-radius: 6px; 
@@ -57,6 +61,7 @@
         .bg-agua { background-color: #3498db; }
         .bg-oxigeno { background-color: #2ecc71; }
         
+        /* Cronómetro */
         .status-sync { font-size: 0.85em; color: #a2b4c6; margin-top: 5px; }
         .timer-badge { font-weight: bold; color: #f1c40f; }
     </style>
@@ -91,7 +96,7 @@
             </div>
         </div>
 
-        <div class="card" id="tarjeta-gestion">
+        <div class="card">
             <h2>📦 Gestión Operativa</h2>
             <div class="section-title">📦 ALMACÉN</div>
             <div class="data-row"><span class="label">Kit de Catéter Disponible:</span> <span class="value" id="cateter">--</span></div>
@@ -110,7 +115,7 @@
             <ul class="lista-pacientes" id="pacientes-programados"><li>--</li></ul>
             
             <div class="label" style="margin-bottom: 5px; color: #27ae60;">Pacientes en Recepcion:</div>
-            <ul class="lista-pacientes" id="pacientes-espera" style="padding-left: 20px; list-style: disc;"><li>--</li></ul>
+            <ul class="lista-pacientes" id="pacientes-espera"><li>--</li></ul>
         </div>
 
         <div class="card">
@@ -162,9 +167,6 @@
     const URL_GOOGLE_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP7ftxIEU6FLZi_Jp33AK-aHq0S30QeCqynnQ0SAYtEnyvzfJKTPpOiXavSdSSPnUY6UcM_i67TiUG/pub?output=csv';
     const TIEMPO_REFRESCO = 30; 
     let tiempoRestante = TIEMPO_REFRESCO;
-
-    // 👇 REVISE QUE ESTA URL SEA TU ENLACE ACTUAL DE GOOGLE APPS SCRIPT 👇
-    const URL_ENVIAR_DATOS = 'https://script.google.com/macros/s/AKfycbzElxtqfTuG4NwFF6gpCUoXfuIuSzMFC9IOkiU3yw_pCiobyVEObnH1atYgtLLLuaX9mA/exec'; 
                     
     async function actualizarDashboard() {
         try {
@@ -199,10 +201,12 @@
             }
             if (campoActual || filaActual.length > 0) { filaActual.push(campoActual.trim()); filas.push(filaActual); }
 
-            let filaDatos3 = filas[2]; // Corresponde a la fila 3 del Excel real
+            let filaDatos3 = filas[2]; 
+            let filaDatos6 = filas[5]; 
 
             if (!filaDatos3) return;
 
+            // --- INYECCIÓN CARD 1 Y CARD 2 ---
             document.getElementById('ph').innerText              = filaDatos3[0] || '--';  
             document.getElementById('tds').innerText             = filaDatos3[1] || '--';  
             document.getElementById('dureza').innerText          = filaDatos3[2] || '--';  
@@ -222,94 +226,27 @@
             document.getElementById('maq-mto').innerText         = filaDatos3[21] || '0';
 
             const contenedorProgramados = document.getElementById('pacientes-programados');
-            if (contenedorProgramados && filaDatos3[18]) {
+            if (filaDatos3[18]) {
                 const listaProg = filaDatos3[18].split('\n').map(n => n.trim()).filter(n => n.length > 0);
-                
-                // CORRECCIÓN DE COORDENADA: Buscamos la lista de marcados en la Fila 4 (filas[3])
-                let listaMarcadosCentral = [];
-                if (filas[3] && filas[3][18]) {
-                    listaMarcadosCentral = filas[3][18].split('\n').map(n => n.trim());
-                }
-
                 contenedorProgramados.innerHTML = listaProg.length ? "" : "<li>No hay pacientes programados</li>";
-                
-                listaProg.forEach(n => { 
-                    const li = document.createElement('li');
-                    li.style.display = "flex";
-                    li.style.alignItems = "center";
-                    li.style.gap = "10px";
-                    li.style.marginBottom = "6px";
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.style.width = '18px';
-                    checkbox.style.height = '18px';
-                    checkbox.style.cursor = 'pointer';
-                    
-                    if (listaMarcadosCentral.includes(n)) {
-                        checkbox.checked = true;
-                        li.style.opacity = "0.5";
-                        li.style.textDecoration = "line-through";
-                    }
-
-                    checkbox.addEventListener('change', function() {
-                        const estaMarcado = this.checked;
-                        
-                        if (estaMarcado) {
-                            li.style.opacity = "0.5";
-                            li.style.textDecoration = "line-through";
-                        } else {
-                            li.style.opacity = "1";
-                            li.style.textDecoration = "none";
-                        }
-
-                        checkbox.disabled = true;
-
-                        fetch(URL_ENVIAR_DATOS, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ nombre: n, marcado: estaMarcado })
-                        })
-                        .then(() => {
-                            setTimeout(actualizarDashboard, 2500);
-                        })
-                        .catch((error) => {
-                            console.error("Error al enviar:", error);
-                            checkbox.disabled = false;
-                        });
-                    });
-
-                    const spanNombre = document.createElement('span');
-                    spanNombre.innerText = n;
-
-                    li.appendChild(checkbox);
-                    li.appendChild(spanNombre);
-                    contenedorProgramados.appendChild(li); 
-                });
+                listaProg.forEach(n => { const li = document.createElement('li'); li.innerText = n; contenedorProgramados.appendChild(li); });
             }
-
             const contenedorEspera = document.getElementById('pacientes-espera');
-            const tarjetaRecepcion = document.getElementById('tarjeta-gestion');
-            if (contenedorEspera && filaDatos3[17]) {
+            const tarjetaRecepcion = contenedorEspera.closest('.card');
+            if (filaDatos3[17]) {
                 const listaNombres = filaDatos3[17].split('\n').map(n => n.trim()).filter(n => n.length > 0);
                 if(listaNombres.length > 0) {
                     contenedorEspera.innerHTML = ""; 
                     listaNombres.forEach(n => { const li = document.createElement('li'); li.innerText = n; contenedorEspera.appendChild(li); });
-                    if (tarjetaRecepcion) {
-                        tarjetaRecepcion.style.backgroundColor = '#fff3cd'; 
-                        tarjetaRecepcion.style.border = '2px solid #ffc107';
-                    }
+                    tarjetaRecepcion.style.backgroundColor = '#fff3cd'; tarjetaRecepcion.style.border = '2px solid #ffc107';
                     ejecutarSonidoAlerta();
                 } else {
                     contenedorEspera.innerHTML = "<li>No hay pacientes en espera</li>";
-                    if (tarjetaRecepcion) {
-                        tarjetaRecepcion.style.backgroundColor = 'white'; 
-                        tarjetaRecepcion.style.border = 'none';
-                    }
+                    tarjetaRecepcion.style.backgroundColor = 'white'; tarjetaRecepcion.style.border = 'none';
                 }
             }
 
+            // --- CARD 3: AGUA Y COMBUSTIBLE ---
             document.getElementById('limpieza').innerText        = filaDatos3[15] || '--';
             document.getElementById('fumigacion').innerText      = filaDatos3[16] || '--';
 
@@ -329,35 +266,45 @@
             document.getElementById('bar-agua').style.width = pAguaLimpio + "%";
             document.getElementById('bar-agua').innerText = `${Math.round(pAguaLimpio)}%`;
 
-            // LECTURA DINÁMICA DE OXÍGENO: Busca la última fila que tenga números (el bloque inferior de Suministros)
-            let filaOxigeno = filas.find(f => f.length > 5 && !isNaN(parseFloat(f[0])) && parseFloat(f[0]) > 100);
-            
-            if (filaOxigeno) {
-                let oxG1Num   = parseFloat(filaOxigeno[0]) || 0; 
-                let oxG2Num   = parseFloat(filaOxigeno[1]) || 0; 
-                let oxPeq1Num = parseFloat(filaOxigeno[2]) || 0; 
-                let oxPeq2Num = parseFloat(filaOxigeno[3]) || 0; 
-                let oxPeq3Num = parseFloat(filaOxigeno[4]) || 0; 
+            // --- 🟢 SECCIÓN OXÍGENO FILTRADA CONTRA DESFASES POR ESPACIOS EN BLANCO ---
+            let oxG1Num = 0, oxG2Num = 0, oxPeq1Num = 0, oxPeq2Num = 0, oxPeq3Num = 0;
 
-                const MAX_PSI = 2000;  
-
-                document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_PSI} PSI`;
-                document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_PSI} PSI`;
-                document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PSI} PSI`;
-                document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PSI} PSI`;
-                document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PSI} PSI`;
-
-                document.getElementById('bar-ox-g1').style.width = Math.min((oxG1Num / MAX_PSI) * 100, 100) + "%";
-                document.getElementById('bar-ox-g1').innerText = `${Math.round(Math.min((oxG1Num / MAX_PSI) * 100, 100))}%`;
-                document.getElementById('bar-ox-g2').style.width = Math.min((oxG2Num / MAX_PSI) * 100, 100) + "%";
-                document.getElementById('bar-ox-g2').innerText = `${Math.round(Math.min((oxG2Num / MAX_PSI) * 100, 100))}%`;
-                document.getElementById('bar-ox-peq1').style.width = Math.min((oxPeq1Num / MAX_PSI) * 100, 100) + "%";
-                document.getElementById('bar-ox-peq1').innerText = `${Math.round(Math.min((oxPeq1Num / MAX_PSI) * 100, 100))}%`;
-                document.getElementById('bar-ox-peq2').style.width = Math.min((oxPeq2Num / MAX_PSI) * 100, 100) + "%";
-                document.getElementById('bar-ox-peq2').innerText = `${Math.round(Math.min((oxPeq2Num / MAX_PSI) * 100, 100))}%`;
-                document.getElementById('bar-ox-peq3').style.width = Math.min((oxPeq3Num / MAX_PSI) * 100, 100) + "%";
-                document.getElementById('bar-ox-peq3').innerText = `${Math.round(Math.min((oxPeq3Num / MAX_PSI) * 100, 100))}%`;
+            if (filaDatos6) {
+                // Filtramos la fila extrayendo únicamente los valores numéricos ingresados
+                let numerosEnFila = filaDatos6.map(val => val.trim()).filter(val => val !== "" && !isNaN(val));
+                
+                // Mapeo ordenado secuencial
+                oxG1Num   = parseFloat(numerosEnFila[0]) || 0; 
+                oxG2Num   = parseFloat(numerosEnFila[1]) || 0; 
+                oxPeq1Num = parseFloat(numerosEnFila[2]) || 0; 
+                oxPeq2Num = parseFloat(numerosEnFila[3]) || 0; 
+                oxPeq3Num = parseFloat(numerosEnFila[4]) || 0; 
             }
+
+            const MAX_PSI = 2000;  
+
+            document.getElementById('txt-ox-g1').innerText   = `${oxG1Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-g2').innerText   = `${oxG2Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-peq1').innerText = `${oxPeq1Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-peq2').innerText = `${oxPeq2Num}/${MAX_PSI} PSI`;
+            document.getElementById('txt-ox-peq3').innerText = `${oxPeq3Num}/${MAX_PSI} PSI`;
+
+            let pOxG1   = Math.min(Math.max((oxG1Num / MAX_PSI) * 100, 0), 100);
+            let pOxG2   = Math.min(Math.max((oxG2Num / MAX_PSI) * 100, 0), 100);
+            let pOxPeq1 = Math.min(Math.max((oxPeq1Num / MAX_PSI) * 100, 0), 100);
+            let pOxPeq2 = Math.min(Math.max((oxPeq2Num / MAX_PSI) * 100, 0), 100);
+            let pOxPeq3 = Math.min(Math.max((oxPeq3Num / MAX_PSI) * 100, 0), 100);
+
+            document.getElementById('bar-ox-g1').style.width = pOxG1 + "%";
+            document.getElementById('bar-ox-g1').innerText = `${Math.round(pOxG1)}%`;
+            document.getElementById('bar-ox-g2').style.width = pOxG2 + "%";
+            document.getElementById('bar-ox-g2').innerText = `${Math.round(pOxG2)}%`;
+            document.getElementById('bar-ox-peq1').style.width = pOxPeq1 + "%";
+            document.getElementById('bar-ox-peq1').innerText = `${Math.round(pOxPeq1)}%`;
+            document.getElementById('bar-ox-peq2').style.width = pOxPeq2 + "%";
+            document.getElementById('bar-ox-peq2').innerText = `${Math.round(pOxPeq2)}%`;
+            document.getElementById('bar-ox-peq3').style.width = pOxPeq3 + "%";
+            document.getElementById('bar-ox-peq3').innerText = `${Math.round(pOxPeq3)}%`;
 
             const ahora = new Date();
             document.getElementById('sync-time').innerText = `Sincronizado en Vivo - Última actualización: ${ahora.toLocaleTimeString()}`;
