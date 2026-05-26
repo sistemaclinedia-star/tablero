@@ -114,12 +114,13 @@
                 <thead>
                     <tr>
                         <th>PACIENTES</th>
-                        <th style="text-align: right;">TIPO DE CATÉTER</th>
+                        <th>TIPO DE CATÉTER</th>
+                        <th style="text-align: right;">POSIBLE FECHA</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-pacientes-cateter">
                     <tr>
-                        <td colspan="2" style="text-align: center; color: #94a3b8;">Cargando información...</td>
+                        <td colspan="3" style="text-align: center; color: #94a3b8;">Cargando información...</td>
                     </tr>
                 </tbody>
             </table>
@@ -259,26 +260,31 @@
             tablaCateterBody.innerHTML = ""; // Limpiar estado anterior
             
             let totalCateteresEncontrados = 0;
-            // Recorremos las filas desde el índice 5 en adelante buscando registros de pacientes en columnas F, G, H
+            // Recorremos las filas desde el índice 5 en adelante buscando registros de pacientes en columnas F, G, H, I
             for(let i = 5; i < filas.length; i++) {
                 let filaIterada = filas[i];
                 if(filaIterada && filaIterada[5]) { // Si hay un nombre de paciente en la Columna F
                     let nombrePaciente = filaIterada[5].trim();
                     let esMahukar = filaIterada[6] ? filaIterada[6].trim().toUpperCase() : "";
                     let esPalindrome = filaIterada[7] ? filaIterada[7].trim().toUpperCase() : "";
+                    let fechaPosible = filaIterada[8] ? filaIterada[8].trim() : "--";
                     
                     let tipoCateter = "No especificado";
                     if(esMahukar === "OK") tipoCateter = "MAHUKAR";
                     else if(esPalindrome === "OK") tipoCateter = "PALINDROME";
                     
                     let tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${nombrePaciente}</td><td style="text-align: right; font-weight: bold; color: #2980b9;">${tipoCateter}</td>`;
+                    tr.innerHTML = `
+                        <td>${nombrePaciente}</td>
+                        <td style="font-weight: bold; color: #2980b9;">${tipoCateter}</td>
+                        <td style="text-align: right; font-weight: bold; color: #7f8c8d;">${fechaPosible}</td>
+                    `;
                     tablaCateterBody.appendChild(tr);
                     totalCateteresEncontrados++;
                 }
             }
             if(totalCateteresEncontrados === 0) {
-                tablaCateterBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #94a3b8; font-style: italic;">No hay procedimientos el día de hoy</td></tr>`;
+                tablaCateterBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic;">No hay procedimientos el día de hoy</td></tr>`;
             }
 
             const contenedorProgramados = document.getElementById('pacientes-programados');
